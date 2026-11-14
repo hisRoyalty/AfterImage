@@ -38,7 +38,7 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
     searches++;
     const r = ts.run({
       ...(collect ? { qp: 9, qv: 6, stride: timed ? 2 : 1 } : depth === 0 ? (timed ? { qp: 10, qv: 6, stride: 2 } : { qp: 9, qv: 5 }) : timed ? { qp: 10, qv: 7, stride: 3 } : { qp: 10, qv: 6 }),
-      maxNodes: depth === 0 ? 4_000_000 : collect ? 1_500_000 : 400_000,
+      maxNodes: depth === 0 ? 4_000_000 : collect ? 1_000_000 : 60_000,
       heur: !collect && depth > 0 && timed ? toOut : undefined,
       goal: (s, res) => {
         if (res === 2) return true;

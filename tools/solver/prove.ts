@@ -9,7 +9,7 @@ import { validateRoom } from '../../src/rooms/validate.ts';
 import { belowPar } from './belowPar.ts';
 import { allRoomIds, loadJson, loadSolution, roomPath, solPath, ROOT } from './load.ts';
 
-const SOLVER_VERSION = 8;
+const SOLVER_VERSION = 9;
 const args = process.argv.slice(2);
 const fresh = args.includes('--fresh');
 const budget = Number(args.find((a) => a.startsWith('--budget='))?.slice(9) ?? 600) * 1000;

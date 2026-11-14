@@ -51,6 +51,7 @@ export class MixdownScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setZoom(2).centerOn(320, 210);
     this.t = 0;
+    this.last = 0;
     this.idx = -1;
     this.done = false;
     this.gStatic = this.add.graphics();
@@ -105,7 +106,12 @@ export class MixdownScene extends Phaser.Scene {
     sfx('medal');
   }
 
-  update(_time: number, delta: number): void {
+  private last = 0;
+
+  update(): void {
+    const now = performance.now();
+    const delta = this.last ? now - this.last : 16.7;
+    this.last = now;
     if (this.done) {
       if (input.pressed('confirm')) this.scene.start('menu');
       return;
