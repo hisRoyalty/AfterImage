@@ -1,4 +1,4 @@
-import { IN_WAIT, IN_DRONE, IN_LOOP, BEAT, LIVE_W, LIVE_H, TS } from '../../src/sim/constants.ts';
+import { IN_WAIT, IN_DRONE, IN_LOOP, IN_J, IN_JP, BEAT, LIVE_W, LIVE_H, TS } from '../../src/sim/constants.ts';
 import { replay } from '../../src/sim/replay.ts';
 import { inMute } from '../../src/sim/step.ts';
 import { encode } from '../../src/sim/rle.ts';
@@ -75,6 +75,17 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
           const len = roundBeat(n0) + extra;
           const masks = walk.slice();
           while (masks.length < len) masks.push(IN_WAIT);
+          masks.push(IN_WAIT | IN_LOOP);
+          const f = tryTake({ i: encode(masks), e: 'loop' });
+          if (f || partial) return f;
+        }
+      }
+      // jump in place (stomp target), and commit at the apex (hovering stone)
+      for (const wait of [BEAT, 3 * BEAT]) {
+        const base = path.concat(new Array<number>(wait).fill(IN_WAIT));
+        const hop = base.concat([IN_WAIT | IN_J | IN_JP], new Array<number>(39).fill(IN_WAIT | IN_J), new Array<number>(12).fill(IN_WAIT));
+        for (const cut of [hop.length, base.length + 22]) {
+          const masks = hop.slice(0, Math.max(cut, BEAT));
           masks.push(IN_WAIT | IN_LOOP);
           const f = tryTake({ i: encode(masks), e: 'loop' });
           if (f || partial) return f;
