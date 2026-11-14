@@ -6,7 +6,7 @@ import type { Room, TakeLog } from '../../src/sim/types.ts';
 import { TakeSearch } from './search.ts';
 
 export type Label = 'Proven' | 'Checked' | 'Partial';
-export interface BelowResult { found: TakeLog[] | null; label: Label; searches: number; ms: number }
+export interface BelowResult { found: TakeLog[] | null; label: Label; searches: number; capped: number; ms: number }
 
 const roundBeat = (n: number) => Math.ceil(n / BEAT) * BEAT;
 
@@ -16,13 +16,15 @@ const roundBeat = (n: number) => Math.ceil(n / BEAT) * BEAT;
 export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
   const t0 = Date.now();
   let searches = 0;
-  let partial = false;
+  let timeout = false;
+  let capped = 0;
   const hasTiming = room.switches.length > 0 || room.beams.length > 0;
 
   const explore = (prefix: TakeLog[], depth: number): TakeLog[] | null => {
-    if (Date.now() - t0 > budgetMs) { partial = true; return null; }
+    if (timeout || Date.now() - t0 > budgetMs) { timeout = true; return null; }
     const base = replay(room, prefix).session;
     const ts = new TakeSearch(base);
+    const timed = base.loops.length > 0 || room.timed;
     const collect = depth < k;
     const quant = depth === 0 ? 5 : 10;
     const drones = new Map<number, number>();
@@ -30,8 +32,8 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
     const deaths = new Map<number, [number, number, number]>();
     searches++;
     const r = ts.run({
-      ...(collect ? { qp: 9, qv: 6 } : depth === 0 ? { qp: 9, qv: 5 } : { qp: 10, qv: 6 }),
-      maxNodes: 3_000_000,
+      ...(collect ? { qp: 9, qv: 6, stride: timed ? 2 : 1 } : depth === 0 ? { qp: 9, qv: 5 } : { qp: 10, qv: 6, stride: timed ? 2 : 1 }),
+      maxNodes: depth === 0 ? 4_000_000 : 1_500_000,
       goal: (s, res) => {
         if (res === 2) return true;
         if (res === 1 && collect) {
@@ -52,7 +54,7 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
           }
         : undefined,
     });
-    if (!r.complete) partial = true;
+    if (!r.complete) capped++;
     if (r.masks) return prefix.concat([{ i: encode(r.masks), e: 'out' }]);
     if (!collect) return null;
     const tryTake = (t: TakeLog) => {
@@ -62,7 +64,7 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
     };
     for (const n of drones.values()) {
       const f = tryTake({ i: encode(ts.path(n).concat([IN_WAIT | IN_DRONE])), e: 'drone' });
-      if (f || partial) return f;
+      if (f || timeout) return f;
     }
     if (!room.loopsOk) return null;
     const delays = hasTiming ? [0, BEAT, 2 * BEAT] : [0];
@@ -77,7 +79,7 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
           while (masks.length < len) masks.push(IN_WAIT);
           masks.push(IN_WAIT | IN_LOOP);
           const f = tryTake({ i: encode(masks), e: 'loop' });
-          if (f || partial) return f;
+          if (f || timeout) return f;
         }
       }
       // jump in place (stomp target), and commit at the apex (hovering stone)
@@ -88,18 +90,18 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
           const masks = hop.slice(0, Math.max(cut, BEAT));
           masks.push(IN_WAIT | IN_LOOP);
           const f = tryTake({ i: encode(masks), e: 'loop' });
-          if (f || partial) return f;
+          if (f || timeout) return f;
         }
       }
     }
     for (const [head, act, kk] of deaths.values()) {
       const f = tryTake({ i: encode(ts.path(head, act, kk)), e: 'death', k: 1 });
-      if (f || partial) return f;
+      if (f || timeout) return f;
     }
     return null;
   };
 
   const found = explore([], 0);
-  const label: Label = partial ? 'Partial' : 'Checked';
-  return { found, label, searches, ms: Date.now() - t0 };
+  const label: Label = timeout || capped ? 'Partial' : 'Checked';
+  return { found, label, searches, capped, ms: Date.now() - t0 };
 }
