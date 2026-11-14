@@ -21,9 +21,9 @@ export class Hud {
     this.g = scene.add.graphics().setDepth(20);
     const style = { fontFamily: FONT, fontSize: '11px', color: CSS.ink, resolution: 3 };
     this.title = scene.add.text(10, HUD_Y + 7, '', { ...style, fontSize: '13px', fontStyle: 'bold' }).setDepth(21);
-    this.par = scene.add.text(330, HUD_Y + 9, '', { ...style, color: CSS.inkSoft }).setDepth(21);
+    this.par = scene.add.text(10, HUD_Y + 34, '', { ...style, color: CSS.inkSoft }).setDepth(21);
     this.keys = scene.add.text(VIEW_W - 10, HUD_Y + 9, '', { ...style, color: CSS.inkSoft }).setOrigin(1, 0).setDepth(21);
-    this.booth = scene.add.text(VIEW_W / 2, HUD_Y + 42, '', { ...style, fontSize: '12px', fontStyle: 'italic' }).setOrigin(0.5, 0.5).setDepth(21);
+    this.booth = scene.add.text(400, HUD_Y + 41, '', { ...style, fontSize: '12px', fontStyle: 'italic' }).setOrigin(0.5, 0.5).setDepth(21);
   }
 
   setRoom(num: number, name: string, par: string, keys: string): void {
@@ -55,7 +55,7 @@ export class Hud {
       else if (tr?.kind === 1) drawLoop(g, x + 3, y + 3, i + 1);
     }
     // beat marker and take clock
-    const bx = 440;
+    const bx = 334;
     const beat = s.phase === PH_COUNTIN ? -1 : Math.floor(s.t / BEAT) % 4;
     for (let b = 0; b < 4; b++) {
       const on = b === beat;

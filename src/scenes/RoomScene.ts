@@ -58,7 +58,7 @@ export class RoomScene extends Phaser.Scene {
     this.hud = new Hud(this);
     const p = json.par.drones + json.par.loops;
     const parTxt = p === 0 ? STR.parNone : [json.par.drones && `${json.par.drones}D`, json.par.loops && `${json.par.loops}L`].filter(Boolean).join('+');
-    this.hud.setRoom(this.index + 1, json.name, STR.par(parTxt, this.s.cap), this.room.loopsOk ? STR.keysAll : STR.keysCh1);
+    this.hud.setRoom(Number(json.id.slice(1)), json.name, STR.par(parTxt, this.s.cap), this.room.loopsOk ? STR.keysAll : STR.keysCh1);
     this.debugText = this.add.text(4, 4, '', { fontFamily: MONO, fontSize: '8px', color: CSS.ink, backgroundColor: '#F4EDE0CC', resolution: 3 }).setDepth(50).setVisible(false);
     this.flow = new RoomFlow(this);
     this.px = this.s.live.x;
