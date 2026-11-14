@@ -15,6 +15,7 @@ export interface RoomJson {
   grid: string[];
   entities: EntityJson[];
   hints: string[];
+  loops?: boolean;
 }
 
 export interface Gate { r: Rect; any: boolean; by: number[] }
@@ -32,6 +33,7 @@ export interface Room {
   gates: Gate[];
   beams: Beam[];
   timed: boolean;
+  loopsOk: boolean;
 }
 
 export interface Drone { kind: 0; x: number; y: number }

@@ -59,6 +59,7 @@ export function loadRoom(json: RoomJson): Room {
     gates,
     beams,
     timed: beams.some((b) => b.on > 0),
+    loopsOk: json.loops ?? json.chapter >= 2,
   };
 }
 

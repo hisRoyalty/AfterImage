@@ -135,7 +135,7 @@ function free(s: Session): boolean {
 function countIn(s: Session, input: number): boolean {
   const { ev } = s;
   if (input & IN_LOOP) {
-    if (s.dead && free(s)) {
+    if (s.dead && free(s) && s.room.loopsOk) {
       const d = s.dead;
       s.tracks.push(makeLoop(d.xs, d.ys, d.n, d.notes));
       s.logs.push({ ...d.log, k: 1 });
@@ -177,7 +177,7 @@ function command(s: Session, input: number): boolean {
     }
     ev.push(E.EV_REFUSE);
   } else if (input & IN_LOOP) {
-    if (s.t >= BEAT && !inMute(s) && free(s)) {
+    if (s.t >= BEAT && !inMute(s) && free(s) && s.room.loopsOk) {
       s.tracks.push(makeLoop(s.recX, s.recY, s.t, s.notes));
       s.logs.push(takeLog(s, 'loop'));
       ev.push(E.EV_LOOP);
