@@ -1,15 +1,18 @@
 import { IN_WAIT, IN_DRONE, IN_LOOP, IN_J, IN_JP, BEAT, LIVE_W, LIVE_H, TS } from '../../src/sim/constants.ts';
 import { replay } from '../../src/sim/replay.ts';
 import { inMute } from '../../src/sim/step.ts';
+import type { Session } from '../../src/sim/step.ts';
 import { encode } from '../../src/sim/rle.ts';
 import type { Room, TakeLog } from '../../src/sim/types.ts';
 import { TakeSearch } from './search.ts';
 
-export type Label = 'Proven' | 'Checked' | 'Partial';
+export type Label = 'Checked' | 'Bounded' | 'Partial';
 export interface BelowResult { found: TakeLog[] | null; label: Label; searches: number; capped: number; ms: number }
 
 const roundBeat = (n: number) => Math.ceil(n / BEAT) * BEAT;
 
+// Checked: every search ran to exhaustion. Bounded: some nested searches (best-first toward the Out)
+// stopped at their node cap. Partial: the time budget ran out first.
 // Looks for a clear using k tracks with a quantized breadth-first search (2-4 px, binned speeds).
 // For k > 0 it tries Drone spots every 5 px (10 px deeper) and beat-quantized Loops: walk to a rest
 // tile, idle, commit at one of three loop lengths; plus every kept death cell.
@@ -19,6 +22,8 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
   let timeout = false;
   let capped = 0;
   const hasTiming = room.switches.length > 0 || room.beams.length > 0;
+  const ox = room.out.x + (room.out.w >> 1), oy = room.out.y + (room.out.h >> 1);
+  const toOut = (s: Session) => (2 * (Math.abs(s.live.x + (LIVE_W >> 1) - ox) + Math.abs(s.live.y + (LIVE_H >> 1) - oy))) / 461;
 
   const explore = (prefix: TakeLog[], depth: number): TakeLog[] | null => {
     if (timeout || Date.now() - t0 > budgetMs) { timeout = true; return null; }
@@ -32,8 +37,9 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
     const deaths = new Map<number, [number, number, number]>();
     searches++;
     const r = ts.run({
-      ...(collect ? { qp: 9, qv: 6, stride: timed ? 2 : 1 } : depth === 0 ? { qp: 9, qv: 5 } : timed ? { qp: 10, qv: 7, stride: 3 } : { qp: 10, qv: 6 }),
-      maxNodes: depth === 0 ? 4_000_000 : 1_500_000,
+      ...(collect ? { qp: 9, qv: 6, stride: timed ? 2 : 1 } : depth === 0 ? (timed ? { qp: 10, qv: 6, stride: 2 } : { qp: 9, qv: 5 }) : timed ? { qp: 10, qv: 7, stride: 3 } : { qp: 10, qv: 6 }),
+      maxNodes: depth === 0 ? 4_000_000 : collect ? 1_500_000 : 400_000,
+      heur: !collect && depth > 0 && timed ? toOut : undefined,
       goal: (s, res) => {
         if (res === 2) return true;
         if (res === 1 && collect) {
@@ -109,6 +115,6 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
   };
 
   const found = explore([], 0);
-  const label: Label = timeout || capped ? 'Partial' : 'Checked';
+  const label: Label = timeout ? 'Partial' : capped ? 'Bounded' : 'Checked';
   return { found, label, searches, capped, ms: Date.now() - t0 };
 }

@@ -9,7 +9,7 @@ import { validateRoom } from '../../src/rooms/validate.ts';
 import { belowPar } from './belowPar.ts';
 import { allRoomIds, loadJson, loadSolution, roomPath, solPath, ROOT } from './load.ts';
 
-const SOLVER_VERSION = 7;
+const SOLVER_VERSION = 8;
 const args = process.argv.slice(2);
 const fresh = args.includes('--fresh');
 const budget = Number(args.find((a) => a.startsWith('--budget='))?.slice(9) ?? 600) * 1000;
@@ -55,7 +55,7 @@ function proveRoom(id: string): [boolean, string] {
     res = { label: b.label, searches: b.searches, capped: b.capped, ms: b.ms };
     writeFileSync(cf, JSON.stringify({ key, res }));
   }
-  const note = res.label === 'Partial' ? ` (${res.capped} of ${res.searches} searches hit the node cap${res.ms >= budget ? ', time budget hit' : ''})` : '';
+  const note = res.label !== 'Checked' ? ` (${res.capped} of ${res.searches} searches capped${res.label === 'Partial' ? ', time budget hit' : ''})` : '';
   return [true, `${tag} ${parTxt} witness ok, below par ${res.label}${note} [${res.searches} searches, ${(res.ms / 1000).toFixed(1)}s]`];
 }
 

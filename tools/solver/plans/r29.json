@@ -1,0 +1,1 @@
+{"takes":[{"goal":{"die":[6,14,8,17]},"end":"keep"},{"goal":{"stand":[11,15,12,15]},"end":"drone"},{"goal":{"stand":[16,15,17,15]},"end":"drone"},{"goal":{"at":[22,15,23,15]},"post":"W200 L50","end":"loop"},{"goal":"out","end":"out"}]}

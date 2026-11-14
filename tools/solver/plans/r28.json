@@ -1,0 +1,1 @@
+{"takes":[{"pre":"R40","goal":{"stand":[7,15,8,15]},"post":"W240","end":"loop"},{"pre":"W100 R106","goal":{"stand":[13,9,13,9]},"end":"drone"},{"pre":"W100 R106","goal":"out","end":"out"}]}
