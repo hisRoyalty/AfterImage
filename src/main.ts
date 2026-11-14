@@ -7,6 +7,9 @@ import { ROOMS } from './rooms/index.ts';
 import { loadRoom } from './sim/room.ts';
 import { replay, solutionMasks } from './sim/replay.ts';
 import type { TakeLog } from './sim/types.ts';
+import { mountAudioDock } from './meta/audioDock.ts';
+import { playlist } from './audio/playlist.ts';
+import { getAudio } from './audio/engine.ts';
 
 const params = new URLSearchParams(location.search);
 const roomParam = Number(params.get('room') ?? 0);
@@ -21,6 +24,7 @@ const game = new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [],
 });
+mountAudioDock();
 game.scene.add('menu', MenuScene, roomParam <= 0 && !params.has('mixdown'));
 game.scene.add('room', RoomScene, roomParam > 0, { index: startIndex });
 game.scene.add('settings', SettingsScene, false);
@@ -47,6 +51,7 @@ window.__overdub = {
     return { room: s.room.json.id, cleared: s.s.phase === 2 };
   },
   scene: () => game.scene.getScenes(true).map((x) => x.scene.key),
+  music: () => ({ title: playlist.title, time: playlist.time, ctx: getAudio()?.ctx.state ?? 'none' }),
   paced: (id: string, takes: TakeLog[], frameMs: number) => {
     game.scene.stop('menu');
     game.scene.stop('room');

@@ -8,9 +8,21 @@ export interface Audio {
   sfx: GainNode;
   noise: AudioBuffer;
   musicDuck: GainNode;
+  playlist: GainNode;
 }
 
 let audio: Audio | null = null;
+const ready: (() => void)[] = [];
+const settingsWatch: (() => void)[] = [];
+
+export function onAudioReady(fn: () => void): void {
+  if (audio) fn();
+  else ready.push(fn);
+}
+
+export function onAudioSettings(fn: () => void): void {
+  settingsWatch.push(fn);
+}
 
 export function getAudio(): Audio | null {
   return audio;
@@ -43,17 +55,22 @@ export function initAudio(): void {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     d[i] = (seed / 0x3fffffff) - 1;
   }
-  audio = { ctx, master, music, sfx, noise, musicDuck };
+  const playlist = ctx.createGain();
+  playlist.gain.value = 0.9;
+  playlist.connect(music);
+  audio = { ctx, master, music, sfx, noise, musicDuck, playlist };
   applyAudioSettings();
+  for (const fn of ready.splice(0)) fn();
 }
 
 export function applyAudioSettings(): void {
+  for (const fn of settingsWatch) fn();
   if (!audio) return;
   const st = load().settings;
   const t = audio.ctx.currentTime;
   const m = st.mute ? 0 : st.master / 100;
   audio.master.gain.setTargetAtTime(m * 0.9, t, 0.02);
-  audio.music.gain.setTargetAtTime((st.music / 100) * 0.55, t, 0.02);
+  audio.music.gain.setTargetAtTime((st.music / 100) * 0.8, t, 0.02);
   audio.sfx.gain.setTargetAtTime((st.sfx / 100) * 0.8, t, 0.02);
 }
 

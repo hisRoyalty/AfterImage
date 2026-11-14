@@ -1,7 +1,7 @@
 import { IN_L, IN_R, IN_J, IN_JP, IN_WAIT, IN_DRONE, IN_LOOP, IN_ERASE, IN_RETRY, IN_WIPE } from '../sim/constants.ts';
 
-export type Action = 'left' | 'right' | 'jump' | 'wait' | 'drone' | 'loop' | 'erase' | 'retry' | 'ff' | 'hint' | 'pause' | 'confirm';
-export const ACTIONS: Action[] = ['left', 'right', 'jump', 'wait', 'drone', 'loop', 'erase', 'retry', 'ff', 'hint', 'pause', 'confirm'];
+export type Action = 'left' | 'right' | 'jump' | 'wait' | 'drone' | 'loop' | 'erase' | 'retry' | 'ff' | 'hint' | 'pause' | 'confirm' | 'mute';
+export const ACTIONS: Action[] = ['left', 'right', 'jump', 'wait', 'drone', 'loop', 'erase', 'retry', 'ff', 'hint', 'pause', 'confirm', 'mute'];
 
 export type KeyMap = Record<Action, string[]>;
 
@@ -18,6 +18,7 @@ export const DEFAULT_KEYS: KeyMap = {
   hint: ['KeyH'],
   pause: ['Escape'],
   confirm: ['Enter'],
+  mute: ['KeyM'],
 };
 
 const WIPE_TICKS = 36;

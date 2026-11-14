@@ -21,6 +21,7 @@ export interface Settings {
   assistTiming: boolean;
   assistTrack: boolean;
   shake: boolean;
+  track: number;
 }
 
 export interface SaveData {
@@ -41,7 +42,7 @@ export function defaultSave(): SaveData {
   return {
     v: 1,
     rooms: {},
-    settings: { master: 80, music: 70, sfx: 80, mute: false, reducedMotion: prefersReduced(), assistSpeed: 100, assistTiming: false, assistTrack: false, shake: true },
+    settings: { master: 80, music: 70, sfx: 80, mute: false, reducedMotion: prefersReduced(), assistSpeed: 100, assistTiming: false, assistTrack: false, shake: true, track: 0 },
     keys: structuredClone(DEFAULT_KEYS),
     booth: [],
     seenIntro: [],

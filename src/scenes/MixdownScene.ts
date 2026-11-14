@@ -16,7 +16,7 @@ import { PAL, CSS } from '../render/palette.ts';
 import { text } from './ui.ts';
 import { bakeImage } from '../render/bake.ts';
 import { sfx } from '../audio/sfx.ts';
-import { voice, midiHz } from '../audio/engine.ts';
+import { voice, midiHz, getAudio } from '../audio/engine.ts';
 
 const PER_ROOM = 1300;
 const INTRO = 3600;
@@ -61,6 +61,14 @@ export class MixdownScene extends Phaser.Scene {
     this.line = text(this, 320, 402, `${STR.booth}: ${LINES.final[0][0]}`, 12, CSS.ink).setOrigin(0.5).setDepth(10).setFontStyle('italic');
     sfx('talk');
     input.clear();
+    this.duck(0.25);
+    this.events.once('shutdown', () => this.duck(1));
+  }
+
+  // The soundtrack steps back so the 30 room notes can be heard as one melody.
+  private duck(v: number): void {
+    const a = getAudio();
+    if (a) a.musicDuck.gain.setTargetAtTime(v, a.ctx.currentTime, 0.3);
   }
 
   private build(i: number): Reel {
@@ -86,13 +94,14 @@ export class MixdownScene extends Phaser.Scene {
     this.gStatic = bakeImage(this, 640, 420, (g) => { drawPaper(g, 640, 420); drawTerrain(g, room); });
     this.title.setText(`${ROOMS[i].id.slice(1)}  ${ROOMS[i].name}`);
     const n = ROOMS[i].note;
-    voice('music', { type: 'triangle', f: midiHz(n), dur: 1.25, vol: 0.13 });
-    voice('music', { type: 'sine', f: midiHz(n - 12), dur: 1.25, vol: 0.06, attack: 0.08 });
-    if (i % 2 === 0) voice('music', { type: 'sawtooth', f: midiHz(38 + (i % 6 === 0 ? 0 : 7)), dur: 2.6, vol: 0.02, attack: 0.4, filter: 700 });
+    voice('sfx', { type: 'triangle', f: midiHz(n), dur: 1.25, vol: 0.13 });
+    voice('sfx', { type: 'sine', f: midiHz(n - 12), dur: 1.25, vol: 0.06, attack: 0.08 });
+    if (i % 2 === 0) voice('sfx', { type: 'sawtooth', f: midiHz(38 + (i % 6 === 0 ? 0 : 7)), dur: 2.6, vol: 0.02, attack: 0.4, filter: 700 });
   }
 
   private finish(): void {
     this.done = true;
+    this.duck(1);
     load().mixdown = true;
     save();
     this.gStatic?.destroy();
