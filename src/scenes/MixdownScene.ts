@@ -14,6 +14,7 @@ import { drawPaper, drawTerrain } from '../render/terrain.ts';
 import { drawDrone, drawLoop, drawLive, dashedRect, loopPos } from '../render/actors.ts';
 import { PAL, CSS } from '../render/palette.ts';
 import { text } from './ui.ts';
+import { bakeImage } from '../render/bake.ts';
 import { sfx } from '../audio/sfx.ts';
 import { voice, midiHz } from '../audio/engine.ts';
 
@@ -38,7 +39,7 @@ export class MixdownScene extends Phaser.Scene {
   t = 0;
   idx = -1;
   reel: Reel | null = null;
-  gStatic!: Phaser.GameObjects.Graphics;
+  gStatic: Phaser.GameObjects.RenderTexture | null = null;
   gDyn!: Phaser.GameObjects.Graphics;
   title!: Phaser.GameObjects.Text;
   line!: Phaser.GameObjects.Text;
@@ -54,9 +55,8 @@ export class MixdownScene extends Phaser.Scene {
     this.last = 0;
     this.idx = -1;
     this.done = false;
-    this.gStatic = this.add.graphics();
+    this.gStatic = bakeImage(this, 640, 420, (g) => drawPaper(g, 640, 420));
     this.gDyn = this.add.graphics().setDepth(5);
-    drawPaper(this.gStatic, 640, 420);
     this.title = text(this, 320, 378, '', 12, CSS.ink, true).setOrigin(0.5).setDepth(10);
     this.line = text(this, 320, 402, `${STR.booth}: ${LINES.final[0][0]}`, 12, CSS.ink).setOrigin(0.5).setDepth(10).setFontStyle('italic');
     sfx('talk');
@@ -81,9 +81,9 @@ export class MixdownScene extends Phaser.Scene {
   private enterRoom(i: number): void {
     this.idx = i;
     this.reel = this.build(i);
-    this.gStatic.clear();
-    drawPaper(this.gStatic, 640, 420);
-    drawTerrain(this.gStatic, this.reel.room);
+    const room = this.reel.room;
+    this.gStatic?.destroy();
+    this.gStatic = bakeImage(this, 640, 420, (g) => { drawPaper(g, 640, 420); drawTerrain(g, room); });
     this.title.setText(`${ROOMS[i].id.slice(1)}  ${ROOMS[i].name}`);
     const n = ROOMS[i].note;
     voice('music', { type: 'triangle', f: midiHz(n), dur: 1.25, vol: 0.13 });
@@ -95,8 +95,8 @@ export class MixdownScene extends Phaser.Scene {
     this.done = true;
     load().mixdown = true;
     save();
-    this.gStatic.clear();
-    drawPaper(this.gStatic, 640, 420);
+    this.gStatic?.destroy();
+    this.gStatic = bakeImage(this, 640, 420, (g) => drawPaper(g, 640, 420));
     this.gDyn.clear();
     this.title.setText('');
     this.line.setText('');

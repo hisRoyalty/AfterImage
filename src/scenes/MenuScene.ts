@@ -8,6 +8,7 @@ import { PAL, CSS } from '../render/palette.ts';
 import { drawPaper } from '../render/terrain.ts';
 import { drawDrone, drawLoop, drawLive, glyph } from '../render/actors.ts';
 import { initAudio } from '../audio/engine.ts';
+import { bakeImage } from '../render/bake.ts';
 import { sfx } from '../audio/sfx.ts';
 
 export function unlocked(i: number): boolean {
@@ -41,8 +42,7 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setZoom(2).centerOn(320, 210);
-    const bg = this.add.graphics();
-    drawPaper(bg, 640, 420);
+    bakeImage(this, 640, 420, (g) => drawPaper(g, 640, 420));
     this.grid = this.add.graphics().setDepth(5);
     this.info = text(this, 320, 372, '', 11, CSS.ink).setOrigin(0.5).setDepth(6);
     this.help = text(this, 320, 398, '', 9, CSS.inkSoft).setOrigin(0.5).setDepth(6);

@@ -8,7 +8,8 @@ import { solutionMasks } from '../sim/replay.ts';
 import type { Room } from '../sim/types.ts';
 import { ROOMS } from '../rooms/index.ts';
 import { drawPaper, drawTerrain } from '../render/terrain.ts';
-import { drawObjects, drawDrone, drawLoop, drawLoopPath, drawLive, loopPos } from '../render/actors.ts';
+import { drawObjects, drawLoopPath, loopPos } from '../render/actors.ts';
+import { bakeActors, bakeImage, actorImage, RES, SPR_OX, SPR_OY, SPR_W, SPR_H } from '../render/bake.ts';
 import { Hud, VIEW_W, VIEW_H } from '../render/hud.ts';
 import { MONO, CSS, PAL } from '../render/palette.ts';
 import { input, settings } from '../meta/game.ts';
@@ -26,7 +27,10 @@ export class RoomScene extends Phaser.Scene {
   index = 0;
   room!: Room;
   s!: Session;
-  gStatic!: Phaser.GameObjects.Graphics;
+  selfImgs: Phaser.GameObjects.Image[] = [];
+  liveImg!: Phaser.GameObjects.Image;
+  paths: Phaser.GameObjects.RenderTexture | null = null;
+  pathKey = '';
   gDyn!: Phaser.GameObjects.Graphics;
   hud!: Hud;
   flow!: RoomFlow;
@@ -70,10 +74,13 @@ export class RoomScene extends Phaser.Scene {
     const st = settings();
     const tun = st.assistTiming ? assistTuning(TUNING) : TUNING;
     this.s = newSession(this.room, tun, st.assistTrack ? 1 : 0);
-    this.gStatic = this.add.graphics();
-    drawPaper(this.gStatic, VIEW_W, VIEW_H);
-    drawTerrain(this.gStatic, this.room);
+    bakeActors(this);
+    bakeImage(this, VIEW_W, VIEW_H, (g) => { drawPaper(g, VIEW_W, VIEW_H); drawTerrain(g, this.room); });
     this.gDyn = this.add.graphics().setDepth(5);
+    this.selfImgs = [0, 1, 2, 3].map(() => actorImage(this, 'drone_1', 6));
+    this.liveImg = actorImage(this, 'live_r', 7).setOrigin((SPR_OX + 9) / SPR_W, (SPR_OY + 20) / SPR_H);
+    this.pathKey = '';
+    this.paths = null;
     this.hud = new Hud(this);
     const p = json.par.drones + json.par.loops;
     const parTxt = p === 0 ? STR.parNone : [json.par.drones && `${json.par.drones}D`, json.par.loops && `${json.par.loops}L`].filter(Boolean).join('+');
@@ -175,19 +182,21 @@ export class RoomScene extends Phaser.Scene {
     const running = s.phase !== PH_COUNTIN;
     g.clear();
     drawObjects(g, s, now);
-    s.tracks.forEach((tr, i) => {
-      if (tr.kind === 1) drawLoopPath(g, tr);
-      else drawDrone(g, tr.x / SUB, tr.y / SUB, i + 1);
+    this.syncPaths(s);
+    this.selfImgs.forEach((img, i) => {
+      const tr = s.tracks[i];
+      img.setVisible(!!tr);
+      if (!tr) return;
+      img.setTexture(`${tr.kind === 0 ? 'drone' : 'loop'}_${i + 1}`);
+      if (tr.kind === 0) img.setPosition(tr.x / SUB, tr.y / SUB);
+      else { const [x, y] = loopPos(tr, s.t, running); img.setPosition(x, y); }
     });
-    s.tracks.forEach((tr, i) => {
-      if (tr.kind !== 1) return;
-      const [x, y] = loopPos(tr, s.t, running);
-      drawLoop(g, x, y, i + 1);
-    });
+    this.liveImg.setVisible(this.flow.liveVisible());
     if (this.flow.liveVisible()) {
       const lx = (this.px + (s.live.x - this.px) * a) / SUB;
       const ly = (this.py + (s.live.y - this.py) * a) / SUB;
-      drawLive(g, lx, ly, this.flow.pose(s));
+      const p = this.flow.pose(s);
+      this.liveImg.setTexture(p.blink ? 'live_b' : p.face < 0 ? 'live_l' : 'live_r').setPosition(lx + 9, ly + 20).setScale(p.sx / RES, p.sy / RES);
     }
     this.flow.drawFx(g);
     const cue = this.pb ? null : this.flow.cue(s);
@@ -203,6 +212,15 @@ export class RoomScene extends Phaser.Scene {
     }
     this.hud.draw(s, input.wipeProgress, this.ff, now);
     if (this.debug) this.drawDebug();
+  }
+
+  // Loop paths only change when tracks do, so they live in their own baked layer.
+  syncPaths(s: Session): void {
+    const key = s.tracks.map((t) => (t.kind === 1 ? `L${t.n}:${t.xs[0]}` : 'D')).join(',');
+    if (key === this.pathKey) return;
+    this.pathKey = key;
+    this.paths?.destroy();
+    this.paths = s.loops.length ? bakeImage(this, VIEW_W, 360, (g) => s.loops.forEach((l) => drawLoopPath(g, l)), 4) : null;
   }
 
   drawDebug(): void {
