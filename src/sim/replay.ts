@@ -43,3 +43,13 @@ export function replay(room: Room, takes: TakeLog[], tun: Tuning = TUNING, hashE
   }
   return { cleared: !error && s.phase === PH_CLEAR, session: s, hashes, ticks, error };
 }
+
+// Flat per-tick input stream for a solution, keeps included.
+export function solutionMasks(takes: TakeLog[]): number[] {
+  const out: number[] = [];
+  for (const t of takes) {
+    for (const m of decode(t.i)) out.push(m);
+    if (t.k) out.push(IN_LOOP);
+  }
+  return out;
+}
