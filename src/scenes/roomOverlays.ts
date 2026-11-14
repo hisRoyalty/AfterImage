@@ -8,6 +8,7 @@ import { input, settings } from '../meta/game.ts';
 import { room as roomSave } from '../meta/save.ts';
 import { STR, UI, fmtTicks } from '../meta/strings.ts';
 import { PAL, CSS } from '../render/palette.ts';
+import { img, nine } from '../render/sprites.ts';
 import { sfx } from '../audio/sfx.ts';
 
 // Chapter card, pause menu and the clear panel for a room.
@@ -17,7 +18,7 @@ export class Overlays {
   card: Phaser.GameObjects.Container | null = null;
   cardT = 0;
   pause: Menu | null = null;
-  pauseBg: Phaser.GameObjects.Graphics | null = null;
+  pauseBg: Phaser.GameObjects.Container | null = null;
   panel: Phaser.GameObjects.Container | null = null;
   videoHint: Phaser.GameObjects.Text | null = null;
 
@@ -36,11 +37,9 @@ export class Overlays {
   private showCard(ch: number): void {
     const sc = this.scene;
     const g = sc.add.graphics();
-    g.fillStyle(PAL.paper, 0.96);
-    g.fillRect(0, 0, 640, 420);
     g.fillStyle(PAL.ink, 1);
     g.fillRect(220, 214, 200, 2);
-    this.card = sc.add.container(0, 0, [g,
+    this.card = sc.add.container(0, 0, [img(sc, 'paper'), g,
       text(sc, 320, 190, STR.chapter[ch], 26, CSS.ink, true).setOrigin(0.5),
       text(sc, 320, 236, STR.chapterSub[ch], 13, CSS.inkSoft).setOrigin(0.5)]).setDepth(80);
     this.cardT = 2200;
@@ -110,13 +109,9 @@ export class Overlays {
     const st = settings();
     const assisted = st.assistTiming || st.assistTrack || st.assistSpeed < 100;
     const medal = !assisted && s.tracks.length <= par;
-    const bg = sc.add.graphics();
-    bg.fillStyle(PAL.paper, 0.95);
-    bg.fillRoundedRect(-150, -26, 300, 52, 8);
-    bg.lineStyle(2, PAL.ink, 1);
-    bg.strokeRoundedRect(-150, -26, 300, 52, 8);
-    if (medal) { bg.fillStyle(PAL.wire, 1); bg.fillCircle(-128, -8, 8); bg.fillStyle(PAL.paper, 1); bg.fillCircle(-128, -8, 3.5); }
-    this.panel = sc.add.container(320, 40, [bg,
+    const bg: Phaser.GameObjects.GameObject[] = [nine(sc, 'panel', -150, -26, 300, 52)];
+    if (medal) bg.push(img(sc, 'medal', -138, -18));
+    this.panel = sc.add.container(320, 40, [...bg,
       text(sc, -110, -10, medal ? STR.cleanTake : STR.cleared, 15, medal ? CSS.ink : CSS.inkSoft, true).setOrigin(0, 0.5),
       text(sc, 140, -10, STR.playback, 10, CSS.loop, true).setOrigin(1, 0.5),
       text(sc, -110, 10, `${STR.selves(s.tracks.length, par)}   ${assisted ? STR.assisted : STR.bestTime(fmtTicks(r.best || s.t + 1))}`, 10, CSS.inkSoft).setOrigin(0, 0.5),

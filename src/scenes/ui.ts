@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { CSS, FONT, PAL } from '../render/palette.ts';
+import { nine, resizeNine } from '../render/sprites.ts';
 
 export interface Item {
   label: () => string;
@@ -24,7 +25,8 @@ export class Menu {
   items: Item[];
   texts: Phaser.GameObjects.Text[] = [];
   cursor = 0;
-  g: Phaser.GameObjects.Graphics;
+  bar: Phaser.GameObjects.NineSlice;
+  scene: Phaser.Scene;
   x: number;
   y: number;
   gap: number;
@@ -35,18 +37,19 @@ export class Menu {
     this.x = x;
     this.y = y;
     this.gap = gap;
-    this.g = scene.add.graphics().setDepth(depth);
+    this.scene = scene;
+    this.bar = nine(scene, 'button', 0, 0, 24, 16, depth);
     items.forEach((it, i) => this.texts.push(text(scene, x, y + i * gap, it.label(), size).setOrigin(0.5, 0.5).setDepth(depth + 1)));
     this.refresh();
   }
 
   refresh(): void {
     this.items.forEach((it, i) => this.texts[i].setText(it.label()).setColor(i === this.cursor ? CSS.ink : CSS.inkSoft));
-    this.g.clear();
     const t = this.texts[this.cursor];
+    this.bar.setVisible(!!t);
     if (!t) return;
-    this.g.fillStyle(PAL.live, 1);
-    this.g.fillRoundedRect(this.x - t.width / 2 - 10, t.y - 8, t.width + 20, 16, 4);
+    resizeNine(this.bar, this.scene, 'button', t.width + 20, 16);
+    this.bar.setPosition(this.x - t.width / 2 - 10, t.y - 8);
   }
 
   update(codes: string[]): 'back' | null {
@@ -68,18 +71,16 @@ export class Menu {
 
   destroy(): void {
     this.texts.forEach((t) => t.destroy());
-    this.g.destroy();
+    this.bar.destroy();
     this.texts = [];
   }
 }
 
-export function panel(scene: Phaser.Scene, w: number, h: number, depth = 55): Phaser.GameObjects.Graphics {
-  const g = scene.add.graphics().setDepth(depth);
-  g.fillStyle(PAL.ink, 0.35);
-  g.fillRect(0, 0, 640, 420);
-  g.fillStyle(PAL.paper, 1);
-  g.fillRoundedRect(320 - w / 2, 210 - h / 2, w, h, 8);
-  g.lineStyle(2, PAL.ink, 1);
-  g.strokeRoundedRect(320 - w / 2, 210 - h / 2, w, h, 8);
-  return g;
+// Dims the screen and puts a paper panel in the middle. Returns both so callers can destroy them together.
+export function panel(scene: Phaser.Scene, w: number, h: number, depth = 55): Phaser.GameObjects.Container {
+  const dim = scene.add.graphics();
+  dim.fillStyle(PAL.ink, 0.35);
+  dim.fillRect(0, 0, 640, 420);
+  const p = nine(scene, 'panel', 320 - w / 2, 210 - h / 2, w, h);
+  return scene.add.container(0, 0, [dim, p]).setDepth(depth);
 }

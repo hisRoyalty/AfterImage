@@ -7,11 +7,12 @@ import { hashSession } from '../sim/hash.ts';
 import { solutionMasks } from '../sim/replay.ts';
 import type { Room } from '../sim/types.ts';
 import { ROOMS } from '../rooms/index.ts';
-import { drawPaper, drawTerrain } from '../render/terrain.ts';
-import { drawObjects, drawLoopPath, loopPos } from '../render/actors.ts';
-import { bakeActors, bakeImage, actorImage, RES, SPR_OX, SPR_OY, SPR_W, SPR_H } from '../render/bake.ts';
+import { bakeRoom } from '../render/terrain.ts';
+import { ObjectLayer } from '../render/objectLayer.ts';
+import { SelfLayer, LiveSprite } from '../render/actorLayer.ts';
+import { nine, resizeNine } from '../render/sprites.ts';
 import { Hud, VIEW_W, VIEW_H } from '../render/hud.ts';
-import { MONO, CSS, PAL } from '../render/palette.ts';
+import { MONO, CSS } from '../render/palette.ts';
 import { input, settings } from '../meta/game.ts';
 import { STR } from '../meta/strings.ts';
 import { keyLabel } from '../meta/input.ts';
@@ -27,10 +28,10 @@ export class RoomScene extends Phaser.Scene {
   index = 0;
   room!: Room;
   s!: Session;
-  selfImgs: Phaser.GameObjects.Image[] = [];
-  liveImg!: Phaser.GameObjects.Image;
-  paths: Phaser.GameObjects.RenderTexture | null = null;
-  pathKey = '';
+  objects!: ObjectLayer;
+  selves!: SelfLayer;
+  live!: LiveSprite;
+  keycap!: Phaser.GameObjects.NineSlice;
   gDyn!: Phaser.GameObjects.Graphics;
   hud!: Hud;
   flow!: RoomFlow;
@@ -74,13 +75,11 @@ export class RoomScene extends Phaser.Scene {
     const st = settings();
     const tun = st.assistTiming ? assistTuning(TUNING) : TUNING;
     this.s = newSession(this.room, tun, st.assistTrack ? 1 : 0);
-    bakeActors(this);
-    bakeImage(this, VIEW_W, VIEW_H, (g) => { drawPaper(g, VIEW_W, VIEW_H); drawTerrain(g, this.room); });
-    this.gDyn = this.add.graphics().setDepth(5);
-    this.selfImgs = [0, 1, 2, 3].map(() => actorImage(this, 'drone_1', 6));
-    this.liveImg = actorImage(this, 'live_r', 7).setOrigin((SPR_OX + 9) / SPR_W, (SPR_OY + 20) / SPR_H);
-    this.pathKey = '';
-    this.paths = null;
+    bakeRoom(this, this.room);
+    this.objects = new ObjectLayer(this, this.s, 3);
+    this.selves = new SelfLayer(this, 6);
+    this.live = new LiveSprite(this, 7);
+    this.gDyn = this.add.graphics().setDepth(8.5);
     this.hud = new Hud(this);
     const p = json.par.drones + json.par.loops;
     const parTxt = p === 0 ? STR.parNone : [json.par.drones && `${json.par.drones}D`, json.par.loops && `${json.par.loops}L`].filter(Boolean).join('+');
@@ -89,6 +88,8 @@ export class RoomScene extends Phaser.Scene {
     this.hud.setRoom(Number(json.id.slice(1)), json.name, STR.par(parTxt, this.s.cap), keys);
     this.debugText = this.add.text(4, 4, '', { fontFamily: MONO, fontSize: '8px', color: CSS.ink, backgroundColor: '#F4EDE0CC', resolution: 3 }).setDepth(50).setVisible(false);
     this.flow = new RoomFlow(this);
+    this.flow.fx.attach(this, 8);
+    this.keycap = nine(this, 'keycap', 0, 0, 16, 14, 9).setVisible(false);
     this.cueText = this.add.text(0, 0, '', { fontFamily: MONO, fontSize: '9px', color: CSS.ink, resolution: 3 }).setOrigin(0.5).setDepth(9).setVisible(false);
     this.px = this.s.live.x;
     this.py = this.s.live.y;
@@ -184,46 +185,27 @@ export class RoomScene extends Phaser.Scene {
     const a = Math.max(0, Math.min(1, this.acc / STEP_MS));
     const running = s.phase !== PH_COUNTIN;
     g.clear();
-    drawObjects(g, s, now);
-    this.syncPaths(s);
-    this.selfImgs.forEach((img, i) => {
-      const tr = s.tracks[i];
-      img.setVisible(!!tr);
-      if (!tr) return;
-      img.setTexture(`${tr.kind === 0 ? 'drone' : 'loop'}_${i + 1}`);
-      if (tr.kind === 0) img.setPosition(tr.x / SUB, tr.y / SUB);
-      else { const [x, y] = loopPos(tr, s.t, running); img.setPosition(x, y); }
-    });
-    this.liveImg.setVisible(this.flow.liveVisible());
+    this.objects.update(s, now);
+    this.selves.update(s, running);
+    this.live.im.setVisible(this.flow.liveVisible());
     if (this.flow.liveVisible()) {
       const lx = (this.px + (s.live.x - this.px) * a) / SUB;
       const ly = (this.py + (s.live.y - this.py) * a) / SUB;
-      const p = this.flow.pose(s);
-      this.liveImg.setTexture(p.blink ? 'live_b' : p.face < 0 ? 'live_l' : 'live_r').setPosition(lx + 9, ly + 20).setScale(p.sx / RES, p.sy / RES);
+      this.live.show(lx, ly, this.flow.pose(s), s.live.vy, s.live.ground);
     }
     this.flow.drawFx(g);
     const cue = this.pb ? null : this.flow.cue(s);
     this.cueText.setVisible(!!cue);
+    this.keycap.setVisible(!!cue);
     if (cue) {
       const bob = Math.sin(now / 220) * 1.5;
       const w = Math.max(14, cue.key.length * 6 + 6);
-      g.fillStyle(PAL.paper, 1);
-      g.fillRoundedRect(cue.x - w / 2, cue.y - 7 + bob, w, 14, 3);
-      g.lineStyle(1.5, PAL.ink, 0.8);
-      g.strokeRoundedRect(cue.x - w / 2, cue.y - 7 + bob, w, 14, 3);
+      resizeNine(this.keycap, this, 'keycap', w, 14);
+      this.keycap.setPosition(cue.x - w / 2, cue.y - 7 + bob);
       this.cueText.setText(cue.key).setPosition(cue.x, cue.y + bob);
     }
     this.hud.draw(s, input.wipeProgress, this.ff, now);
     if (this.debug) this.drawDebug();
-  }
-
-  // Loop paths only change when tracks do, so they live in their own baked layer.
-  syncPaths(s: Session): void {
-    const key = s.tracks.map((t) => (t.kind === 1 ? `L${t.n}:${t.xs[0]}` : 'D')).join(',');
-    if (key === this.pathKey) return;
-    this.pathKey = key;
-    this.paths?.destroy();
-    this.paths = s.loops.length ? bakeImage(this, VIEW_W, 360, (g) => s.loops.forEach((l) => drawLoopPath(g, l)), 4) : null;
   }
 
   drawDebug(): void {

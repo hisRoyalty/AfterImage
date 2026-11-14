@@ -9,7 +9,7 @@ import { load, room as roomSave, save } from '../meta/save.ts';
 import { keyLabel } from '../meta/input.ts';
 import { UI } from '../meta/strings.ts';
 import { PAL } from '../render/palette.ts';
-import type { LivePose } from '../render/actors.ts';
+import type { LivePose } from '../render/actorLayer.ts';
 import { Particles } from '../render/fx.ts';
 import { Booth } from '../narrator/booth.ts';
 import { sfx } from '../audio/sfx.ts';
@@ -187,7 +187,7 @@ export class RoomFlow {
   }
 
   drawFx(g: G): void {
-    this.fx.draw(g);
+    this.fx.draw();
     if (this.flash > 0) {
       g.fillStyle(PAL.danger, 0.12 * this.flash);
       g.fillRect(0, 0, 640, 360);

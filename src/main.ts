@@ -3,6 +3,7 @@ import { RoomScene } from './scenes/RoomScene.ts';
 import { MenuScene } from './scenes/MenuScene.ts';
 import { SettingsScene } from './scenes/SettingsScene.ts';
 import { MixdownScene } from './scenes/MixdownScene.ts';
+import { BootScene } from './scenes/BootScene.ts';
 import { ROOMS } from './rooms/index.ts';
 import { loadRoom } from './sim/room.ts';
 import { replay, solutionMasks } from './sim/replay.ts';
@@ -25,17 +26,20 @@ const game = new Phaser.Game({
   scene: [],
 });
 mountAudioDock();
-game.scene.add('menu', MenuScene, roomParam <= 0 && !params.has('mixdown'));
-game.scene.add('room', RoomScene, roomParam > 0, { index: startIndex });
+game.registry.set('start', params.has('mixdown') ? { key: 'mixdown' } : roomParam > 0 ? { key: 'room', data: { index: startIndex } } : { key: 'menu' });
+game.registry.set('onReady', () => { window.__overdub = hook; });
+game.scene.add('menu', MenuScene, false);
+game.scene.add('room', RoomScene, false);
 game.scene.add('settings', SettingsScene, false);
-game.scene.add('mixdown', MixdownScene, params.has('mixdown'));
+game.scene.add('mixdown', MixdownScene, false);
+game.scene.add('boot', BootScene, true);
 
 // Hook for the e2e specs: same sim code as the shipped bundle.
 declare global {
   interface Window { __overdub?: unknown }
 }
 (window as unknown as { __game: Phaser.Game }).__game = game;
-window.__overdub = {
+const hook = {
   rooms: () => ROOMS.map((r) => r.id),
   replay: (id: string, takes: TakeLog[]) => {
     const json = ROOMS.find((r) => r.id === id);

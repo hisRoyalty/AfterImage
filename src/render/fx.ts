@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { res } from './sprites.ts';
 
 const MAX = 192;
 
@@ -14,6 +15,13 @@ export class Particles {
   color = new Uint32Array(MAX);
   grav = new Float32Array(MAX);
   next = 0;
+  private ims: Phaser.GameObjects.Image[] = [];
+  private base = 1;
+
+  attach(scene: Phaser.Scene, depth: number): void {
+    this.base = 1 / res(scene, 'particle');
+    this.ims = Array.from({ length: MAX }, () => scene.add.image(0, 0, 'particle').setDepth(depth).setVisible(false));
+  }
 
   emit(x: number, y: number, n: number, color: number, o: { speed?: number; up?: number; life?: number; size?: number; grav?: number; spread?: number } = {}): void {
     const speed = o.speed ?? 60;
@@ -45,13 +53,13 @@ export class Particles {
     }
   }
 
-  draw(g: Phaser.GameObjects.Graphics): void {
-    for (let i = 0; i < MAX; i++) {
-      if (this.life[i] <= 0) continue;
+  draw(): void {
+    for (let i = 0; i < this.ims.length; i++) {
+      const im = this.ims[i];
+      if (this.life[i] <= 0) { if (im.visible) im.setVisible(false); continue; }
       const a = this.life[i] / this.span[i];
-      g.fillStyle(this.color[i], a);
-      const sz = this.size[i] * (0.5 + 0.5 * a);
-      g.fillRect(this.x[i] - sz / 2, this.y[i] - sz / 2, sz, sz);
+      const sz = (this.size[i] * (0.5 + 0.5 * a)) / 4;
+      im.setVisible(true).setPosition(this.x[i], this.y[i]).setAlpha(a).setTint(this.color[i]).setScale(sz * this.base);
     }
   }
 

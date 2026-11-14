@@ -10,11 +10,11 @@ import { load, room as roomSave, save } from '../meta/save.ts';
 import { input } from '../meta/game.ts';
 import { STR } from '../meta/strings.ts';
 import { LINES } from '../narrator/lines.ts';
-import { drawPaper, drawTerrain } from '../render/terrain.ts';
-import { drawDrone, drawLoop, drawLive, dashedRect, loopPos } from '../render/actors.ts';
-import { PAL, CSS } from '../render/palette.ts';
+import { bakeRoom } from '../render/terrain.ts';
+import { SelfSprite, LiveSprite, loopPos } from '../render/actorLayer.ts';
+import { img } from '../render/sprites.ts';
+import { CSS } from '../render/palette.ts';
 import { text } from './ui.ts';
-import { bakeImage } from '../render/bake.ts';
 import { sfx } from '../audio/sfx.ts';
 import { voice, midiHz, getAudio } from '../audio/engine.ts';
 
@@ -39,8 +39,10 @@ export class MixdownScene extends Phaser.Scene {
   t = 0;
   idx = -1;
   reel: Reel | null = null;
-  gStatic: Phaser.GameObjects.RenderTexture | null = null;
-  gDyn!: Phaser.GameObjects.Graphics;
+  gStatic: Phaser.GameObjects.GameObject | null = null;
+  ghosts: Phaser.GameObjects.Image[] = [];
+  selves: SelfSprite[] = [];
+  live!: LiveSprite;
   title!: Phaser.GameObjects.Text;
   line!: Phaser.GameObjects.Text;
   done = false;
@@ -55,8 +57,11 @@ export class MixdownScene extends Phaser.Scene {
     this.last = 0;
     this.idx = -1;
     this.done = false;
-    this.gStatic = bakeImage(this, 640, 420, (g) => drawPaper(g, 640, 420));
-    this.gDyn = this.add.graphics().setDepth(5);
+    this.gStatic = img(this, 'paper');
+    this.ghosts = Array.from({ length: 12 }, () => img(this, 'ghost', 0, 0, 4).setAlpha(0.35).setVisible(false));
+    this.selves = [0, 1, 2, 3].map(() => new SelfSprite(this, 5));
+    this.live = new LiveSprite(this, 6);
+    this.live.im.setVisible(false);
     this.title = text(this, 320, 378, '', 12, CSS.ink, true).setOrigin(0.5).setDepth(10);
     this.line = text(this, 320, 402, `${STR.booth}: ${LINES.final[0][0]}`, 12, CSS.ink).setOrigin(0.5).setDepth(10).setFontStyle('italic');
     sfx('talk');
@@ -91,7 +96,7 @@ export class MixdownScene extends Phaser.Scene {
     this.reel = this.build(i);
     const room = this.reel.room;
     this.gStatic?.destroy();
-    this.gStatic = bakeImage(this, 640, 420, (g) => { drawPaper(g, 640, 420); drawTerrain(g, room); });
+    this.gStatic = bakeRoom(this, room);
     this.title.setText(`${ROOMS[i].id.slice(1)}  ${ROOMS[i].name}`);
     const n = ROOMS[i].note;
     voice('sfx', { type: 'triangle', f: midiHz(n), dur: 1.25, vol: 0.13 });
@@ -105,8 +110,10 @@ export class MixdownScene extends Phaser.Scene {
     load().mixdown = true;
     save();
     this.gStatic?.destroy();
-    this.gStatic = bakeImage(this, 640, 420, (g) => drawPaper(g, 640, 420));
-    this.gDyn.clear();
+    this.gStatic = img(this, 'paper');
+    this.ghosts.forEach((g) => g.setVisible(false));
+    this.selves.forEach((sp) => sp.show(undefined, 1, 0, 0));
+    this.live.im.setVisible(false);
     this.title.setText('');
     this.line.setText('');
     text(this, 320, 170, STR.title, 40, CSS.ink, true).setOrigin(0.5).setDepth(10);
@@ -133,27 +140,27 @@ export class MixdownScene extends Phaser.Scene {
     if (i !== this.idx) { this.enterRoom(i); this.line.setText(''); }
     const reel = this.reel as Reel;
     const p = ((this.t - INTRO) % PER_ROOM) / PER_ROOM;
-    const g = this.gDyn;
-    g.clear();
     const at = (pts: number[], f: number): [number, number] => {
       const n = pts.length / 2;
       const k = Math.min(n - 1, Math.floor(f * n)) * 2;
       return [pts[k], pts[k + 1]];
     };
-    for (const gh of reel.ghosts) {
-      if (gh.length < 2) continue;
-      const [x, y] = at(gh, p);
-      g.lineStyle(1, PAL.ink, 0.35);
-      dashedRect(g, x, y, 18, 20, 2, 2);
-    }
-    const frame = Math.floor(p * reel.len);
-    reel.tracks.forEach((tr, k) => {
-      if (tr.kind === 0) drawDrone(g, tr.x / SUB, tr.y / SUB, k + 1);
-      else { const [x, y] = loopPos(tr, frame, true); drawLoop(g, x, y, k + 1); }
+    this.ghosts.forEach((im, k) => {
+      const gh = reel.ghosts[k];
+      im.setVisible(!!gh && gh.length >= 2);
+      if (gh && gh.length >= 2) { const [x, y] = at(gh, p); im.setPosition(x, y); }
     });
+    const frame = Math.floor(p * reel.len);
+    this.selves.forEach((sp, k) => {
+      const tr = reel.tracks[k];
+      if (!tr) return sp.show(undefined, k + 1, 0, 0);
+      if (tr.kind === 0) sp.show(tr, k + 1, tr.x / SUB, tr.y / SUB);
+      else { const [x, y] = loopPos(tr, frame, true); sp.show(tr, k + 1, x, y); }
+    });
+    this.live.im.setVisible(reel.live.length >= 2);
     if (reel.live.length >= 2) {
       const [x, y] = at(reel.live, p);
-      drawLive(g, x, y, { sx: 1, sy: 1, face: 1, blink: false });
+      this.live.show(x, y, { sx: 1, sy: 1, face: 1, blink: false });
     }
   }
 }
