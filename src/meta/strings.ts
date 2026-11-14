@@ -16,8 +16,8 @@ export const STR = {
   playback: 'PLAYBACK',
   saveVideo: 'V  save this playback as video',
   paused: 'PAUSED',
-  chapter: ['', 'I. COUNT-IN', 'II. ROUND', 'III. BACKBEAT', 'IV. FEEDBACK', 'V. MIXDOWN'],
-  chapterSub: ['', 'Drones', 'Loops as time', 'Bounce', 'Hazards as tools', 'All four tracks'],
+  chapter: ['', 'I. COUNT-IN', 'II. ROUND', 'III. BACKBEAT', 'IV. FEEDBACK', 'V. MIXDOWN', 'VI. AFTER HOURS'],
+  chapterSub: ['', 'Drones', 'Loops as time', 'Bounce', 'Hazards as tools', 'All four tracks', 'Lights out'],
   endLine: 'Every take you made is on the reel.',
 };
 

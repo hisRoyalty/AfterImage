@@ -1,0 +1,1 @@
+{"takes":[{"goal":{"stand":[2,15,3,15]},"post":"W600","end":"loop"},{"goal":{"stand":[21,15,21,15]},"post":"W60 J40 W20","end":"loop"},{"goal":"out","end":"out"}]}

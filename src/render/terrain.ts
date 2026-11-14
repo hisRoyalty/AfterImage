@@ -11,7 +11,9 @@ type RT = Phaser.GameObjects.RenderTexture;
 const px = (v: number) => v / 256;
 
 // Ground stays code-drawn: rounded ink blocks with a lighter top edge.
-export function drawGround(g: G, room: Room): void {
+export const NIGHT = { ground: 0x2b2546, top: 0x5fd4c4 };
+
+export function drawGround(g: G, room: Room, ink: number = PAL.ink, top: number = PAL.inkTop): void {
   const solid = (x: number, y: number) => {
     const t = tileAt(room, x, y);
     return t === T_SOLID || t === T_DRUM;
@@ -22,10 +24,10 @@ export function drawGround(g: G, room: Room): void {
       const X = x * TILE, Y = y * TILE;
       const up = solid(x, y - 1), dn = solid(x, y + 1), lf = solid(x - 1, y), rt = solid(x + 1, y);
       const r = { tl: !up && !lf ? 5 : 0, tr: !up && !rt ? 5 : 0, bl: !dn && !lf ? 5 : 0, br: !dn && !rt ? 5 : 0 };
-      g.fillStyle(PAL.ink, 1);
+      g.fillStyle(ink, 1);
       g.fillRoundedRect(X, Y, TILE, TILE, r);
       if (!up) {
-        g.fillStyle(PAL.inkTop, 1);
+        g.fillStyle(top, 1);
         g.fillRoundedRect(X + (r.tl ? 2 : 0), Y + 1, TILE - (r.tl ? 2 : 0) - (r.tr ? 2 : 0), 3, { tl: r.tl ? 2 : 0, tr: r.tr ? 2 : 0, bl: 0, br: 0 });
       }
     }
@@ -42,12 +44,14 @@ export function stampSprite(scene: Phaser.Scene, rt: RT, key: string, x: number,
 // The whole static room as one image: paper, mute zones, ground, hazards, drumheads, pad, Out and emitters.
 export function bakeRoom(scene: Phaser.Scene, room: Room, w = 640, h = 420, depth = 0): RT {
   const rt = scene.add.renderTexture(0, 0, w * RES, h * RES).setOrigin(0, 0).setScale(1 / RES).setDepth(depth);
-  stampSprite(scene, rt, 'paper', 0, 0);
+  const night = room.json.chapter === 6;
+  stampSprite(scene, rt, night ? 'paper_night' : 'paper', 0, 0);
   for (const m of room.mutes) {
     for (let y = px(m.y); y < px(m.y + m.h); y += TILE) for (let x = px(m.x); x < px(m.x + m.w); x += TILE) stampSprite(scene, rt, 'mute', x, y);
   }
   const g = scene.make.graphics({}, false);
-  drawGround(g, room);
+  if (night) drawGround(g, room, NIGHT.ground, NIGHT.top);
+  else drawGround(g, room);
   g.setScale(RES);
   rt.draw(g, 0, 0);
   for (let y = 0; y < ROWS; y++) {

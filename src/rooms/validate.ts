@@ -8,7 +8,7 @@ export function validateRoom(r: RoomJson): string[] {
   const at = (x: number, y: number) => (y < 0 || y >= ROWS || x < 0 || x >= COLS ? '#' : r.grid[y][x]);
   if (!/^r\d\d$/.test(r.id)) err.push('bad id');
   if (!r.name) err.push('missing name');
-  if (!(r.chapter >= 1 && r.chapter <= 5)) err.push('chapter out of range');
+  if (!(r.chapter >= 1 && r.chapter <= 6)) err.push('chapter out of range');
   if (!(r.tracks >= 0 && r.tracks <= 4)) err.push('tracks out of range');
   if (r.par.drones + r.par.loops > r.tracks) err.push('par exceeds tracks');
   if (!Number.isInteger(r.note)) err.push('note must be an integer');

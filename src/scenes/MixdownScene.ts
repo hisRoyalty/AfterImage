@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ROOMS } from '../rooms/index.ts';
+import { MAIN as ROOMS } from '../rooms/index.ts';
 import { loadRoom } from '../sim/room.ts';
 import { replay } from '../sim/replay.ts';
 import { step, PH_RUN } from '../sim/step.ts';

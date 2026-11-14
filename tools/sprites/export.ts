@@ -9,10 +9,11 @@ for (const [key, d] of Object.entries(SPRITES)) {
   const draw = ART[key];
   if (!draw) { console.warn('no art for', key); continue; }
   const c = document.createElement('canvas');
-  c.width = d.w * SCALE;
-  c.height = d.h * SCALE;
+  const k = d.x ?? SCALE;
+  c.width = d.w * k;
+  c.height = d.h * k;
   const ctx = c.getContext('2d') as CanvasRenderingContext2D;
-  ctx.scale(SCALE, SCALE);
+  ctx.scale(k, k);
   draw(new Pen(ctx));
   out[key] = c.toDataURL('image/png');
 }

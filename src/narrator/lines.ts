@@ -33,3 +33,25 @@ export const LINES: Pool = {
 };
 
 export const BOOTH_LINES_MAX_WORDS = 14;
+
+// Chapter VI, after hours: the booth lights are off and Booth has stayed behind.
+const NIGHT: Record<string, string[]> = {
+  enter: ['Lights are off. I stayed. Somebody has to run the desk.'],
+  'die.static': ['Heard that one in the dark.', 'Clipped. I could not see it either.'],
+  'die.pit': ['Gone quiet. Felt that.', 'Somewhere down there.'],
+  'die.beam': ['Only thing in here brighter than you.'],
+  'die.same': ['Same dark spot, three times. I am marking it by ear.'],
+  'die.doorstep': ['You could hear the door from there.'],
+  keep1: ['Keep it. It glows.'],
+  'clear.par': ['Clean, and I barely saw it. Even better.'],
+  'clear.over': ['Messy in the dark. Still counts.'],
+  'clear.clean': ['Not one miss with the lights out. Who taught you?'],
+  'clear.long': ['Long night. Worth staying for.'],
+  takes10: ['Ten takes in the dark. I can hear you counting.'],
+  idle: ['Still here. So am I.'],
+};
+for (const [k, v] of Object.entries(NIGHT)) {
+  const pool = (LINES[k] ??= []);
+  for (let i = 0; i < 6; i++) pool[i] ??= [];
+  pool[6] = v;
+}

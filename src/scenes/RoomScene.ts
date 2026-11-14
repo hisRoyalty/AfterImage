@@ -10,7 +10,7 @@ import { ROOMS } from '../rooms/index.ts';
 import { bakeRoom } from '../render/terrain.ts';
 import { ObjectLayer } from '../render/objectLayer.ts';
 import { SelfLayer, LiveSprite } from '../render/actorLayer.ts';
-import { nine, resizeNine } from '../render/sprites.ts';
+import { nine, resizeNine, img, res } from '../render/sprites.ts';
 import { Hud, VIEW_W, VIEW_H } from '../render/hud.ts';
 import { MONO, CSS } from '../render/palette.ts';
 import { input, settings } from '../meta/game.ts';
@@ -32,6 +32,7 @@ export class RoomScene extends Phaser.Scene {
   selves!: SelfLayer;
   live!: LiveSprite;
   keycap!: Phaser.GameObjects.NineSlice;
+  dark: Phaser.GameObjects.Image | null = null;
   gDyn!: Phaser.GameObjects.Graphics;
   hud!: Hud;
   flow!: RoomFlow;
@@ -80,6 +81,14 @@ export class RoomScene extends Phaser.Scene {
     this.selves = new SelfLayer(this, 6);
     this.live = new LiveSprite(this, 7);
     this.gDyn = this.add.graphics().setDepth(8.5);
+    this.dark = null;
+    const radius = json.dark ?? 0;
+    if (radius > 0) {
+      // Night chapter: only a pool of light round you; your selves, beams and (mostly) the Out glow through.
+      this.dark = img(this, 'dark', 0, 0, 5.5).setOrigin(0.5).setScale(radius / 50 / res(this, 'dark'));
+      for (const b of this.objects.beams) { b.on.setDepth(5.8); b.off.setDepth(5.8); }
+      if (radius > 60) img(this, 'out', this.room.out.x / SUB, this.room.out.y / SUB, 5.8);
+    }
     this.hud = new Hud(this);
     const p = json.par.drones + json.par.loops;
     const parTxt = p === 0 ? STR.parNone : [json.par.drones && `${json.par.drones}D`, json.par.loops && `${json.par.loops}L`].filter(Boolean).join('+');
@@ -193,6 +202,7 @@ export class RoomScene extends Phaser.Scene {
       const lx = (this.px + (s.live.x - this.px) * a) / SUB;
       const ly = (this.py + (s.live.y - this.py) * a) / SUB;
       this.live.show(lx, ly, this.flow.pose(s), s.live.vy, s.live.ground);
+      this.dark?.setPosition(lx + 9, ly + 10);
     }
     this.flow.drawFx(g);
     const cue = this.pb ? null : this.flow.cue(s);

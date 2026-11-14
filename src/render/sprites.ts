@@ -23,7 +23,8 @@ export function finishSprites(scene: Phaser.Scene): void {
       g.destroy();
       console.warn(`sprite missing: src/sprites/${key}.png`);
     }
-    if (res(scene, key) < 2) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    const r = res(scene, key);
+    if (r >= 0.9 && r < 1.5) scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
   }
 }
 

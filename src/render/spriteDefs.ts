@@ -2,12 +2,15 @@
 // Sizes below are in game pixels (1 tile = 20). A file can be drawn at any whole multiple of that size:
 // the shipped files are 2x; 1x pixel art is shown with crisp, unsmoothed pixels.
 // ox/oy: where the 18x20 body box starts inside the sprite. slice: nine-slice border (stretchable sprites).
-export interface SpriteDef { w: number; h: number; ox?: number; oy?: number; slice?: number; tile?: boolean }
+// x: export scale for the default file (2 unless set).
+export interface SpriteDef { w: number; h: number; ox?: number; oy?: number; slice?: number; tile?: boolean; x?: number }
 
 const actor = { w: 26, h: 28, ox: 4, oy: 5 };
 
 export const SPRITES: Record<string, SpriteDef> = {
   paper: { w: 640, h: 420 },
+  paper_night: { w: 640, h: 420 },
+  dark: { w: 2560, h: 1680, x: 0.25 },
   hud_bar: { w: 640, h: 60 },
   live_idle: actor,
   live_blink: actor,

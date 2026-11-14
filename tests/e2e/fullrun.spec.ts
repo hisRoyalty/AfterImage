@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ids = readdirSync(join(process.cwd(), 'src', 'rooms')).filter((f) => /^r\d\d\.json$/.test(f)).map((f) => f.slice(0, 3)).sort();
+const ids = readdirSync(join(process.cwd(), 'src', 'rooms')).filter((f) => /^r\d\d\.json$/.test(f)).map((f) => f.slice(0, 3)).sort()
+  .filter((id) => JSON.parse(readFileSync(join(process.cwd(), 'src', 'rooms', `${id}.json`), 'utf8')).chapter <= 5); // story chapters end with the Mixdown
 const takes = (id: string) => JSON.parse(readFileSync(join(process.cwd(), 'solutions', `${id}.par.json`), 'utf8')).takes;
 
 test('fresh browser: title screen to the end of the Mixdown', async ({ page }) => {
@@ -38,7 +39,7 @@ test('fresh browser: title screen to the end of the Mixdown', async ({ page }) =
   await page.waitForTimeout(500);
   expect(await hook()).toContain('menu');
   const save = await page.evaluate(() => JSON.parse(localStorage.getItem('overdub.save.v1')!));
-  expect(Object.values(save.rooms).filter((r: any) => r.cleared).length).toBe(ids.length);
+  expect(ids.every((id) => save.rooms[id]?.cleared)).toBe(true);
   expect(save.mixdown).toBe(true);
   expect(errors).toEqual([]);
 });

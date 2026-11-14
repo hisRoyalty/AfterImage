@@ -89,11 +89,12 @@ export class MenuScene extends Phaser.Scene {
     this.mode = 'select';
     this.help.setText(UI.selectHelp);
     this.info.setColor(CSS.ink);
-    for (let ch = 1; ch <= 5; ch++) this.labels.push(text(this, 40, 40 + (ch - 1) * 62, STR.chapter[ch], 10, CSS.inkSoft, true).setDepth(6));
+    const chapters = Math.ceil(ROOMS.length / 6);
+    for (let ch = 1; ch <= chapters; ch++) this.labels.push(text(this, 40, 26 + (ch - 1) * 54, STR.chapter[ch], 10, CSS.inkSoft, true).setDepth(6));
     ROOMS.forEach((r, i) => {
       const { x, y } = this.cell(i);
-      const box = nine(this, 'cell', x, y, 84, 40, 5);
-      const tick = img(this, 'tick', x + 8, y + 26, 6);
+      const box = nine(this, 'cell', x, y, 84, 36, 5);
+      const tick = img(this, 'tick', x + 8, y + 24, 6);
       const medal = img(this, 'medal', x + 72, y + 12, 6).setOrigin(0.5).setScale(0.55 / res(this, 'medal'));
       this.cells.push({ box, tick, medal });
       this.objs.push(box, tick, medal);
@@ -103,7 +104,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private cell(i: number): { x: number; y: number } {
-    return { x: 40 + (i % 6) * 96, y: 52 + Math.floor(i / 6) * 62 };
+    return { x: 40 + (i % 6) * 96, y: 38 + Math.floor(i / 6) * 54 };
   }
 
   private drawGrid(): void {

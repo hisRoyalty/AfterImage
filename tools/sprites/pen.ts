@@ -71,6 +71,16 @@ export class Pen {
     return this;
   }
 
+  // Fills w x h with colour, leaving a soft transparent hole (fully clear inside r0, opaque beyond r1).
+  hole(w: number, h: number, cx: number, cy: number, r0: number, r1: number, c: number, a: number): this {
+    const g = this.ctx.createRadialGradient(cx, cy, r0, cx, cy, r1);
+    g.addColorStop(0, this.rgba(c, 0));
+    g.addColorStop(1, this.rgba(c, a));
+    this.ctx.fillStyle = g;
+    this.ctx.fillRect(0, 0, w, h);
+    return this;
+  }
+
   lineBetween(x1: number, y1: number, x2: number, y2: number): this {
     this.ctx.beginPath();
     this.ctx.moveTo(x1, y1);

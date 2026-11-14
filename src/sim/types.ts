@@ -16,6 +16,7 @@ export interface RoomJson {
   entities: EntityJson[];
   hints: string[];
   loops?: boolean;
+  dark?: number; // light radius in px for the night chapter (render only)
 }
 
 export interface Gate { r: Rect; any: boolean; by: number[] }

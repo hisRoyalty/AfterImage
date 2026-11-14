@@ -3,7 +3,7 @@ import type { RoomScene } from './RoomScene.ts';
 import type { RoomFlow } from './roomFlow.ts';
 import { Menu, panel, text } from './ui.ts';
 import type { Item } from './ui.ts';
-import { ROOMS } from '../rooms/index.ts';
+import { ROOMS, MAIN } from '../rooms/index.ts';
 import { input, settings } from '../meta/game.ts';
 import { room as roomSave } from '../meta/save.ts';
 import { STR, UI, fmtTicks } from '../meta/strings.ts';
@@ -122,7 +122,9 @@ export class Overlays {
   private next(): void {
     sfx('confirm');
     const n = this.scene.index + 1;
-    if (n < ROOMS.length) this.scene.scene.start('room', { index: n });
-    else this.scene.scene.start(this.scene.scene.get('mixdown') ? 'mixdown' : 'menu');
+    const id = ROOMS[this.scene.index].id;
+    if (id === MAIN[MAIN.length - 1].id) this.scene.scene.start('mixdown');
+    else if (n < ROOMS.length) this.scene.scene.start('room', { index: n });
+    else this.scene.scene.start('menu');
   }
 }
