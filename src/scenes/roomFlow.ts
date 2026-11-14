@@ -168,6 +168,19 @@ export class RoomFlow {
     }
   }
 
+  // Wordless key-cap cue for the rooms that introduce a key.
+  cue(s: Session): { key: string; x: number; y: number } | null {
+    const id = s.room.json.id;
+    const lx = s.live.x / SUB, ly = s.live.y / SUB;
+    const free = s.tracks.length < s.cap;
+    if (!free || this.clearT >= 0 || this.ov.blocking()) return null;
+    if ((id === 'r01' || id === 'r02' || id === 'r03') && s.phase === PH_RUN && s.live.ground && s.t > 120 && s.tracks.length < (id === 'r02' ? 2 : 1))
+      return { key: keyLabel(input.keys.drone[0] ?? 'KeyX'), x: lx + 9, y: ly - 14 };
+    if (id === 'r07' && s.phase === PH_RUN && s.t >= 60 && s.tracks.length === 0) return { key: keyLabel(input.keys.loop[0] ?? 'KeyC'), x: lx + 9, y: ly - 14 };
+    if (id === 'r09' && s.phase !== PH_RUN && s.dead && s.tracks.length === 0) return { key: keyLabel(input.keys.loop[0] ?? 'KeyC'), x: lx + 9, y: ly - 14 };
+    return null;
+  }
+
   pose(s: Session): LivePose {
     const k = this.stretch * 0.18 - this.squash * 0.22;
     return { sx: 1 - k * 0.8, sy: 1 + k, face: s.live.face, blink: this.blinkT > 3050 || s.phase !== PH_RUN };

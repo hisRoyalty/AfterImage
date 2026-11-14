@@ -10,7 +10,7 @@ import { ROOMS } from '../rooms/index.ts';
 import { drawPaper, drawTerrain } from '../render/terrain.ts';
 import { drawObjects, drawDrone, drawLoop, drawLoopPath, drawLive, loopPos } from '../render/actors.ts';
 import { Hud, VIEW_W, VIEW_H } from '../render/hud.ts';
-import { MONO, CSS } from '../render/palette.ts';
+import { MONO, CSS, PAL } from '../render/palette.ts';
 import { input, settings } from '../meta/game.ts';
 import { STR } from '../meta/strings.ts';
 import { keyLabel } from '../meta/input.ts';
@@ -18,6 +18,7 @@ import type { Action } from '../meta/input.ts';
 import { initAudio } from '../audio/engine.ts';
 import { RoomFlow } from './roomFlow.ts';
 import { Music } from '../audio/music.ts';
+import { Recorder } from '../meta/record.ts';
 
 const STEP_MS = 1000 / 60;
 
@@ -30,7 +31,9 @@ export class RoomScene extends Phaser.Scene {
   hud!: Hud;
   flow!: RoomFlow;
   music = new Music();
+  recorder = new Recorder();
   debugText!: Phaser.GameObjects.Text;
+  cueText!: Phaser.GameObjects.Text;
   debug = false;
   acc = 0;
   ff = false;
@@ -79,11 +82,12 @@ export class RoomScene extends Phaser.Scene {
     this.hud.setRoom(Number(json.id.slice(1)), json.name, STR.par(parTxt, this.s.cap), keys);
     this.debugText = this.add.text(4, 4, '', { fontFamily: MONO, fontSize: '8px', color: CSS.ink, backgroundColor: '#F4EDE0CC', resolution: 3 }).setDepth(50).setVisible(false);
     this.flow = new RoomFlow(this);
+    this.cueText = this.add.text(0, 0, '', { fontFamily: MONO, fontSize: '9px', color: CSS.ink, resolution: 3 }).setOrigin(0.5).setDepth(9).setVisible(false);
     this.px = this.s.live.x;
     this.py = this.s.live.y;
     input.clear();
     this.flow.start();
-    this.events.once('shutdown', () => this.music.stop());
+    this.events.once('shutdown', () => { this.music.stop(); this.recorder.stop(); });
     if (!settings().reducedMotion) { this.cameras.main.setZoom(2.08); this.tweens.add({ targets: this.cameras.main, zoom: 2, duration: 420, ease: 'Cubic.easeOut' }); }
     this.input.keyboard?.on('keydown-F1', () => { this.debug = !this.debug; this.debugText.setVisible(this.debug); });
   }
@@ -152,12 +156,14 @@ export class RoomScene extends Phaser.Scene {
     this.pbRate = [Math.ceil(4 * k), Math.ceil(k)];
     this.pb = newSession(this.room, s.tun, s.cap - this.room.json.tracks);
     this.pbAt = 0;
+    this.recorder.start(this.game.canvas);
   }
 
   stepPlayback(): void {
     const pb = this.pb as Session;
     const n = this.pbAt < this.pbKept ? this.pbRate[0] : this.pbRate[1];
     for (let k = 0; k < n && this.pbAt < this.pbMasks.length; k++) step(pb, this.pbMasks[this.pbAt++]);
+    if (this.pbAt >= this.pbMasks.length && this.pbAt++ === this.pbMasks.length + 45) this.recorder.stop();
     this.px = pb.live.x;
     this.py = pb.live.y;
   }
@@ -184,6 +190,17 @@ export class RoomScene extends Phaser.Scene {
       drawLive(g, lx, ly, this.flow.pose(s));
     }
     this.flow.drawFx(g);
+    const cue = this.pb ? null : this.flow.cue(s);
+    this.cueText.setVisible(!!cue);
+    if (cue) {
+      const bob = Math.sin(now / 220) * 1.5;
+      const w = Math.max(14, cue.key.length * 6 + 6);
+      g.fillStyle(PAL.paper, 1);
+      g.fillRoundedRect(cue.x - w / 2, cue.y - 7 + bob, w, 14, 3);
+      g.lineStyle(1.5, PAL.ink, 0.8);
+      g.strokeRoundedRect(cue.x - w / 2, cue.y - 7 + bob, w, 14, 3);
+      this.cueText.setText(cue.key).setPosition(cue.x, cue.y + bob);
+    }
     this.hud.draw(s, input.wipeProgress, this.ff, now);
     if (this.debug) this.drawDebug();
   }

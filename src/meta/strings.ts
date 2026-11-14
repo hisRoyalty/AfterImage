@@ -14,6 +14,7 @@ export const STR = {
   assisted: 'assisted: no medal or time',
   continue: 'Enter  continue',
   playback: 'PLAYBACK',
+  saveVideo: 'V  save this playback as video',
   paused: 'PAUSED',
   chapter: ['', 'I. COUNT-IN', 'II. ROUND', 'III. BACKBEAT', 'IV. FEEDBACK', 'V. MIXDOWN'],
   chapterSub: ['', 'Drones', 'Loops as time', 'Bounce', 'Hazards as tools', 'All four tracks'],

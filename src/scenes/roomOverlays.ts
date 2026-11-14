@@ -19,6 +19,7 @@ export class Overlays {
   pause: Menu | null = null;
   pauseBg: Phaser.GameObjects.Graphics | null = null;
   panel: Phaser.GameObjects.Container | null = null;
+  videoHint: Phaser.GameObjects.Text | null = null;
 
   constructor(scene: RoomScene, flow: RoomFlow) {
     this.scene = scene;
@@ -58,6 +59,8 @@ export class Overlays {
       return;
     }
     if (this.panel) {
+      if (input.takeCodes().includes('KeyV') && this.scene.recorder.blob) { this.scene.recorder.download(`overdub-${this.scene.room.json.id}.webm`); sfx('confirm'); }
+      this.videoHint?.setVisible(!!this.scene.recorder.blob);
       if (input.pressed('confirm')) this.next();
       return;
     }
@@ -118,6 +121,7 @@ export class Overlays {
       text(sc, 140, -10, STR.playback, 10, CSS.loop, true).setOrigin(1, 0.5),
       text(sc, -110, 10, `${STR.selves(s.tracks.length, par)}   ${assisted ? STR.assisted : STR.bestTime(fmtTicks(r.best || s.t + 1))}`, 10, CSS.inkSoft).setOrigin(0, 0.5),
       text(sc, 140, 10, STR.continue, 10, CSS.ink).setOrigin(1, 0.5)]).setDepth(40);
+    this.videoHint = text(sc, 320, 76, STR.saveVideo, 9, CSS.inkSoft).setOrigin(0.5).setDepth(40).setVisible(false);
   }
 
   private next(): void {
