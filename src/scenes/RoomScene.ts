@@ -110,6 +110,7 @@ export class RoomScene extends Phaser.Scene {
     const preT = s.phase === PH_COUNTIN ? 0 : s.t;
     this.px = s.live.x;
     this.py = s.live.y;
+    this.flow.preVy = s.live.vy;
     step(s, mask);
     this.ticks++;
     if (s.takes !== takes || s.phase === PH_COUNTIN) { this.px = s.live.x; this.py = s.live.y; }

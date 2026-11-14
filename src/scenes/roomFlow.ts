@@ -18,6 +18,8 @@ import { logsHash, keepGhosts } from '../meta/ghosts.ts';
 import type { Ghost } from '../meta/ghosts.ts';
 
 type G = Phaser.GameObjects.Graphics;
+// Landing speed (1/256 px per tick) that shakes the screen: roughly a 5-tile drop.
+const BIG_FALL = 2350;
 
 // Everything around the sim for one room: sound, effects, Booth, hints and the overlays.
 export class RoomFlow {
@@ -34,6 +36,7 @@ export class RoomFlow {
   hintT = 0;
   hintTier = 0;
   deaths = 0;
+  preVy = 0;
   ghosts: Ghost[] = [];
 
   constructor(scene: RoomScene) {
@@ -65,7 +68,7 @@ export class RoomFlow {
       switch (c) {
         case E.EV_JUMP: sfx('jump'); this.stretch = 1; this.fx.emit(lx, ly, 4, PAL.paperDetail, { speed: 30, life: 0.3, grav: 60 }); break;
         case E.EV_LAND: sfx('land'); this.squash = 0.6; this.fx.emit(lx, ly, 3, PAL.paperDetail, { speed: 25, life: 0.25, grav: 40 }); break;
-        case E.EV_HARDLAND: sfx('hardland'); this.squash = 1; this.fx.emit(lx, ly, 8, PAL.mute, { speed: 50, life: 0.35, grav: 80 }); this.shake(60, 0.002); break;
+        case E.EV_HARDLAND: sfx('hardland'); this.squash = 1; this.fx.emit(lx, ly, 8, PAL.mute, { speed: 50, life: 0.35, grav: 80 }); if (this.preVy >= BIG_FALL) this.shake(90, 0.004); break;
         case E.EV_BOUNCE: sfx('bounce', E.evArg(e)); this.stretch = 1.2; this.fx.emit(lx, ly, 6, PAL.bounce, { speed: 70, life: 0.35, spread: 2 }); break;
         case E.EV_DRONE: sfx('drone'); break;
         case E.EV_LOOP: sfx('loop'); break;
