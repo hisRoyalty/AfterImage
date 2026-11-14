@@ -37,7 +37,7 @@ function live(p: Pen, look: [number, number], blink: boolean): void {
   p.fillStyle(PAL.ink).fillCircle(ex - 4 + look[0], ey + look[1], 1.3).fillCircle(ex + 4 + look[0], ey + look[1], 1.3);
 }
 
-const DIGITS = ['111101101101111', '010110010010111', '111001111100111', '111001111001111'];
+const DIGITS = ['010110010010111', '111001111100111', '111001111001111', '101101111001001'];
 function digit(p: Pen, n: number): void {
   p.fillStyle(WHITE);
   for (let i = 0; i < 15; i++) if (DIGITS[n - 1][i] === '1') p.fillRect(i % 3, Math.floor(i / 3), 1, 1);
