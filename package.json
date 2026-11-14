@@ -1,0 +1,26 @@
+{
+  "name": "overdub",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prove": "node --disable-warning=ExperimentalWarning tools/solver/prove.ts",
+    "solve:all": "node --disable-warning=ExperimentalWarning tools/solver/prove.ts --all",
+    "e2e": "vite build && playwright test"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}
