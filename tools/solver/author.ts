@@ -17,7 +17,7 @@ const CONFIGS = [[1, 9, 6, 3], [1, 8, 5, 3], [1, 10, 6, 0], [1, 9, 6, 0], [2, 9,
 type Box = [number, number, number, number];
 interface PlanTake {
   pre?: string;
-  goal?: 'out' | { stand?: Box; at?: Box; die?: Box };
+  goal?: 'out' | { stand?: Box; at?: Box; die?: Box; apex?: Box };
   post?: string;
   until?: number;
   end: 'drone' | 'loop' | 'keep' | 'out';
@@ -39,10 +39,11 @@ export function compileTake(room: Room, prior: TakeLog[], p: PlanTake): TakeLog 
       if (res !== 0) return false;
       if (g.stand) return s.live.ground && s.live.vx === 0 && inBox(s, g.stand) && !inMute(s);
       if (g.at) return inBox(s, g.at);
+      if (g.apex) return s.live.bouncing && s.live.vy >= 0 && inBox(s, g.apex);
       return false;
     };
     let found: number[] | null = null;
-    const tb = g === 'out' ? room.out : { x: (g.stand ?? g.at ?? g.die)![0] * TS, y: (g.stand ?? g.at ?? g.die)![1] * TS, w: TS, h: TS };
+    const tb = g === 'out' ? room.out : { x: (g.stand ?? g.at ?? g.die ?? g.apex)![0] * TS, y: (g.stand ?? g.at ?? g.die ?? g.apex)![1] * TS, w: TS, h: TS };
     const gx = tb.x + (tb.w >> 1), gy = tb.y + (tb.h >> 1);
     for (const [stride, qp, qv, w] of CONFIGS) {
       const heur = w ? (s: Session) => (w * (Math.abs(s.live.x + (LIVE_W >> 1) - gx) + Math.abs(s.live.y + (LIVE_H >> 1) - gy))) / 461 : undefined;

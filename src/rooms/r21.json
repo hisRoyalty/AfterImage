@@ -1,0 +1,37 @@
+{
+  "id": "r21",
+  "name": "Dead Air",
+  "chapter": 4,
+  "tracks": 2,
+  "par": {"drones":0,"loops":1},
+  "note": 69,
+  "grid": [
+    "################################",
+    "#..................#############",
+    "#..................#############",
+    "#..................#############",
+    "#..................#############",
+    "#..................#############",
+    "#..................#############",
+    "#..................#############",
+    "#..................#############",
+    "#..................#############",
+    "#.......mmmmmmmmmmm#############",
+    "#.......mmmmmmmmmmm#############",
+    "#.......mmmmmmmmmmmmmmmmmm.....#",
+    "#.......mmmmmmmmmmmmmmmmmm.....#",
+    "#.......mmmmmmmmmmmmmmmmmm.....#",
+    "#.S.....mmmmmmmmmmmmmmmmmm..O..#",
+    "################################",
+    "################################"
+  ],
+  "entities": [
+    {"t":"switch","id":"a","x":12,"y":15,"w":2,"h":1},
+    {"t":"gate","x":22,"y":12,"w":1,"h":4,"open":"any","by":["a"]}
+  ],
+  "hints": [
+    "Nothing records inside the hatched zone.",
+    "A Loop only cares where you were, not where you pressed the key.",
+    "Stand on the plate a while, walk out of the zone, then keep the take."
+  ]
+}

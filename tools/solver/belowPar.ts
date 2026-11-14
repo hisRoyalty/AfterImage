@@ -32,7 +32,7 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
     const deaths = new Map<number, [number, number, number]>();
     searches++;
     const r = ts.run({
-      ...(collect ? { qp: 9, qv: 6, stride: timed ? 2 : 1 } : depth === 0 ? { qp: 9, qv: 5 } : { qp: 10, qv: 6, stride: timed ? 2 : 1 }),
+      ...(collect ? { qp: 9, qv: 6, stride: timed ? 2 : 1 } : depth === 0 ? { qp: 9, qv: 5 } : timed ? { qp: 10, qv: 7, stride: 3 } : { qp: 10, qv: 6 }),
       maxNodes: depth === 0 ? 4_000_000 : 1_500_000,
       goal: (s, res) => {
         if (res === 2) return true;
@@ -67,13 +67,20 @@ export function belowPar(room: Room, k: number, budgetMs: number): BelowResult {
       if (f || timeout) return f;
     }
     if (!room.loopsOk) return null;
-    const delays = hasTiming ? [0, BEAT, 2 * BEAT] : [0];
+    const touches = (n: number) => {
+      const st = ts.store, o = n * 10;
+      const x = st[o], y = st[o + 1];
+      for (const r of room.switches) if (x < r.x + r.w && x + LIVE_W > r.x && y < r.y + r.h && y + LIVE_H > r.y) return true;
+      for (const b of room.beams) if (b.dy === 0 && y < b.ey * TS + 12 * 256 && y + LIVE_H > b.ey * TS + 8 * 256) return true;
+      return false;
+    };
     for (const n of rests.values()) {
       const path = ts.path(n);
-      for (const d of delays) {
+      const key = hasTiming && touches(n);
+      for (const d of key ? [0, BEAT, 2 * BEAT] : [0]) {
         const walk = new Array<number>(d).fill(IN_WAIT).concat(path);
         const n0 = Math.max(BEAT, walk.length);
-        for (const extra of [0, BEAT, 2 * BEAT]) {
+        for (const extra of key ? [0, BEAT, 2 * BEAT] : [BEAT]) {
           const len = roundBeat(n0) + extra;
           const masks = walk.slice();
           while (masks.length < len) masks.push(IN_WAIT);

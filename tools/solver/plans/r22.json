@@ -1,0 +1,1 @@
+{"takes":[{"goal":{"stand":[15,9,15,9]},"end":"drone"},{"goal":{"stand":[6,9,7,9]},"post":"W150","end":"loop"},{"goal":"out","end":"out"}]}
