@@ -97,7 +97,9 @@ export class RoomScene extends Phaser.Scene {
     this.events.once('shutdown', () => { this.music.stop(); this.recorder.stop(); });
     this.cameras.main.fadeIn(180, 244, 237, 224);
     if (!settings().reducedMotion) { this.cameras.main.setZoom(2.08); this.tweens.add({ targets: this.cameras.main, zoom: 2, duration: 420, ease: 'Cubic.easeOut' }); }
-    this.input.keyboard?.on('keydown-F1', () => { this.debug = !this.debug; this.debugText.setVisible(this.debug); });
+    const f1 = () => { this.debug = !this.debug; this.debugText.setVisible(this.debug); };
+    this.input.keyboard?.on('keydown-F1', f1);
+    this.events.once('shutdown', () => this.input.keyboard?.off('keydown-F1', f1));
   }
 
   // One fixed sim step with interpolation bookkeeping.

@@ -44,6 +44,7 @@ export class Input {
     if (e.repeat) return;
     this.down.add(e.code);
     this.codes.push(e.code);
+    if (this.codes.length > 32) this.codes.shift();
     for (const a of ACTIONS) if (this.keys[a].includes(e.code)) this.edges.add(a);
   }
 
