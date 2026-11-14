@@ -42,6 +42,7 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setZoom(2).centerOn(320, 210);
+    input.clear();
     bakeImage(this, 640, 420, (g) => drawPaper(g, 640, 420));
     this.grid = this.add.graphics().setDepth(5);
     this.info = text(this, 320, 372, '', 11, CSS.ink).setOrigin(0.5).setDepth(6);

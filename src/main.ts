@@ -39,6 +39,14 @@ window.__overdub = {
     const r = replay(loadRoom(json), takes, undefined, 30);
     return { cleared: r.cleared, hashes: r.hashes, error: r.error };
   },
+  // Feeds a witness into whatever room is running, through the real game loop.
+  drive: (takes: TakeLog[]) => {
+    const s = game.scene.getScene('room') as RoomScene;
+    if (!game.scene.isActive('room')) return null;
+    s.driveScripted(solutionMasks(takes), 1000 / 60);
+    return { room: s.room.json.id, cleared: s.s.phase === 2 };
+  },
+  scene: () => game.scene.getScenes(true).map((x) => x.scene.key),
   paced: (id: string, takes: TakeLog[], frameMs: number) => {
     game.scene.stop('menu');
     game.scene.stop('room');
