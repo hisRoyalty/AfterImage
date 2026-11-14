@@ -17,6 +17,7 @@ export const STR = {
   paused: 'PAUSED',
   chapter: ['', 'I. COUNT-IN', 'II. ROUND', 'III. BACKBEAT', 'IV. FEEDBACK', 'V. MIXDOWN'],
   chapterSub: ['', 'Drones', 'Loops as time', 'Bounce', 'Hazards as tools', 'All four tracks'],
+  endLine: 'Every take you made is on the reel.',
 };
 
 export function fmtTicks(t: number): string {
@@ -59,4 +60,5 @@ export const UI = {
   hintOffer: (k: string) => `${k} hint`,
   hintTier: (i: number, t: string) => `HINT ${i}/3  ${t}`,
   credits: 'made with Phaser · sound synthesised live',
+  mixdown: 'Mixdown',
 };

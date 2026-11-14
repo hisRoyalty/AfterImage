@@ -4,6 +4,7 @@ import { newSession, step, PH_CLEAR, PH_COUNTIN } from '../sim/step.ts';
 import type { Session } from '../sim/step.ts';
 import { TUNING, assistTuning, SUB } from '../sim/constants.ts';
 import { hashSession } from '../sim/hash.ts';
+import { solutionMasks } from '../sim/replay.ts';
 import type { Room } from '../sim/types.ts';
 import { ROOMS } from '../rooms/index.ts';
 import { drawPaper, drawTerrain } from '../render/terrain.ts';
@@ -16,6 +17,7 @@ import { keyLabel } from '../meta/input.ts';
 import type { Action } from '../meta/input.ts';
 import { initAudio } from '../audio/engine.ts';
 import { RoomFlow } from './roomFlow.ts';
+import { Music } from '../audio/music.ts';
 
 const STEP_MS = 1000 / 60;
 
@@ -27,6 +29,7 @@ export class RoomScene extends Phaser.Scene {
   gDyn!: Phaser.GameObjects.Graphics;
   hud!: Hud;
   flow!: RoomFlow;
+  music = new Music();
   debugText!: Phaser.GameObjects.Text;
   debug = false;
   acc = 0;
@@ -34,6 +37,11 @@ export class RoomScene extends Phaser.Scene {
   px = 0;
   py = 0;
   scripted: number[] | null = null;
+  pb: Session | null = null;
+  pbMasks: number[] = [];
+  pbAt = 0;
+  pbKept = 0;
+  pbRate = [4, 1];
   ticks = 0;
   frames = 0;
   fpsT = 0;
@@ -49,6 +57,10 @@ export class RoomScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.acc = 0;
+    this.lastNow = 0;
+    this.ff = false;
+    this.pb = null;
     this.cameras.main.setZoom(2).centerOn(VIEW_W / 2, VIEW_H / 2);
     const json = ROOMS[this.index];
     this.room = loadRoom(json);
@@ -71,6 +83,7 @@ export class RoomScene extends Phaser.Scene {
     this.py = this.s.live.y;
     input.clear();
     this.flow.start();
+    this.events.once('shutdown', () => this.music.stop());
     if (!settings().reducedMotion) { this.cameras.main.setZoom(2.08); this.tweens.add({ targets: this.cameras.main, zoom: 2, duration: 420, ease: 'Cubic.easeOut' }); }
     this.input.keyboard?.on('keydown-F1', () => { this.debug = !this.debug; this.debugText.setVisible(this.debug); });
   }
@@ -86,6 +99,7 @@ export class RoomScene extends Phaser.Scene {
     this.ticks++;
     if (s.takes !== takes || s.phase === PH_COUNTIN) { this.px = s.live.x; this.py = s.live.y; }
     this.flow.onEvents(s, s.ev, preT);
+    if (!this.scripted) this.music.onStep(s);
   }
 
   // Runs as many fixed steps as the elapsed time allows. Shared by play and the e2e pacing test.
@@ -96,6 +110,7 @@ export class RoomScene extends Phaser.Scene {
     while (this.acc >= STEP_MS && n < 5) {
       this.acc -= STEP_MS;
       n++;
+      if (this.pb) { this.stepPlayback(); continue; }
       if (this.scripted) {
         const m = this.scripted.shift();
         if (m === undefined) { this.scripted = null; break; }
@@ -119,15 +134,36 @@ export class RoomScene extends Phaser.Scene {
     const now = performance.now();
     const delta = this.lastNow ? Math.min(250, now - this.lastNow) : 16.7;
     this.lastNow = now;
-    if (!this.scripted) this.flow.update(delta);
+    if (!this.scripted) { this.flow.update(delta); this.music.update(this.s, this.ff, delta); }
     this.advance(delta);
     this.frames++;
     if (time - this.fpsT > 500) { this.fps = (this.frames * 1000) / (time - this.fpsT); this.frames = 0; this.fpsT = time; }
     this.render(time);
   }
 
-  render(now: number): void {
+  // Playback after a clear: kept takes at 4x, then the clearing take with every self, 8 s at most.
+  startPlayback(): void {
     const s = this.s;
+    if (!s.clearLog) return;
+    this.pbMasks = solutionMasks(s.logs.concat([s.clearLog]));
+    this.pbKept = solutionMasks(s.logs).length;
+    const frames = this.pbKept / 4 + (this.pbMasks.length - this.pbKept);
+    const k = Math.max(1, frames / 480);
+    this.pbRate = [Math.ceil(4 * k), Math.ceil(k)];
+    this.pb = newSession(this.room, s.tun, s.cap - this.room.json.tracks);
+    this.pbAt = 0;
+  }
+
+  stepPlayback(): void {
+    const pb = this.pb as Session;
+    const n = this.pbAt < this.pbKept ? this.pbRate[0] : this.pbRate[1];
+    for (let k = 0; k < n && this.pbAt < this.pbMasks.length; k++) step(pb, this.pbMasks[this.pbAt++]);
+    this.px = pb.live.x;
+    this.py = pb.live.y;
+  }
+
+  render(now: number): void {
+    const s = this.pb ?? this.s;
     const g = this.gDyn;
     const a = Math.max(0, Math.min(1, this.acc / STEP_MS));
     const running = s.phase !== PH_COUNTIN;

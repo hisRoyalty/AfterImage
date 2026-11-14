@@ -14,6 +14,8 @@ import { Particles } from '../render/fx.ts';
 import { Booth } from '../narrator/booth.ts';
 import { sfx } from '../audio/sfx.ts';
 import { Overlays } from './roomOverlays.ts';
+import { logsHash, keepGhosts } from '../meta/ghosts.ts';
+import type { Ghost } from '../meta/ghosts.ts';
 
 type G = Phaser.GameObjects.Graphics;
 
@@ -32,6 +34,7 @@ export class RoomFlow {
   hintT = 0;
   hintTier = 0;
   deaths = 0;
+  ghosts: Ghost[] = [];
 
   constructor(scene: RoomScene) {
     this.scene = scene;
@@ -82,6 +85,7 @@ export class RoomFlow {
           const cause = c === E.EV_TAPE ? E.DIE_TAPE : E.evArg(e);
           sfx(cause === E.DIE_BEAM ? 'beamDeath' : cause === E.DIE_PIT ? 'pitDeath' : cause === E.DIE_TAPE ? 'tape' : 'staticDeath');
           const d = s.dead;
+          if (d) { this.ghosts.push({ i: d.log.i, k: s.logs.length, h: logsHash(s.logs) }); if (this.ghosts.length > 60) this.ghosts.shift(); }
           if (d) this.fx.emit(d.xs[d.n - 1] / SUB + 9, d.ys[d.n - 1] / SUB + 10, reduced ? 6 : 16, cause === E.DIE_TAPE ? PAL.mute : PAL.danger, { speed: 90, life: 0.5 });
           if (!reduced) this.flash = 1;
           this.shake(120, 0.004);
@@ -113,6 +117,8 @@ export class RoomFlow {
     } else r.assisted = true;
     if (!r.selves || used < r.selves) r.selves = used;
     r.sol = JSON.stringify(s.logs.concat(s.clearLog ? [s.clearLog] : []));
+    const kept = keepGhosts(this.ghosts, s.logs);
+    if (kept.length || !r.ghosts.length) r.ghosts = kept;
     save();
     if (new URLSearchParams(location.search).has('rec')) exportRec(json.id, r.sol);
     sfx('note', json.note);
@@ -158,7 +164,7 @@ export class RoomFlow {
     this.ov.update(delta);
     if (this.clearT >= 0) {
       this.clearT += delta;
-      if (this.clearT > 500) this.ov.clearPanel();
+      if (this.clearT > 500 && !this.scene.pb) { this.scene.startPlayback(); this.ov.clearPanel(); }
     }
   }
 

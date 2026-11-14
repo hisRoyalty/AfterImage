@@ -109,15 +109,15 @@ export class Overlays {
     const medal = !assisted && s.tracks.length <= par;
     const bg = sc.add.graphics();
     bg.fillStyle(PAL.paper, 0.95);
-    bg.fillRoundedRect(-120, -54, 240, 108, 8);
+    bg.fillRoundedRect(-150, -26, 300, 52, 8);
     bg.lineStyle(2, PAL.ink, 1);
-    bg.strokeRoundedRect(-120, -54, 240, 108, 8);
-    if (medal) { bg.fillStyle(PAL.wire, 1); bg.fillCircle(-92, -32, 9); bg.fillStyle(PAL.paper, 1); bg.fillCircle(-92, -32, 4); }
-    this.panel = sc.add.container(320, 176, [bg,
-      text(sc, 0, -32, medal ? STR.cleanTake : STR.cleared, 18, medal ? CSS.ink : CSS.inkSoft, true).setOrigin(0.5),
-      text(sc, 0, -8, STR.selves(s.tracks.length, par), 12).setOrigin(0.5),
-      text(sc, 0, 10, assisted ? STR.assisted : STR.bestTime(fmtTicks(r.best || s.t + 1)), 11, CSS.inkSoft).setOrigin(0.5),
-      text(sc, 0, 36, STR.continue, 11, CSS.inkSoft).setOrigin(0.5)]).setDepth(40);
+    bg.strokeRoundedRect(-150, -26, 300, 52, 8);
+    if (medal) { bg.fillStyle(PAL.wire, 1); bg.fillCircle(-128, -8, 8); bg.fillStyle(PAL.paper, 1); bg.fillCircle(-128, -8, 3.5); }
+    this.panel = sc.add.container(320, 40, [bg,
+      text(sc, -110, -10, medal ? STR.cleanTake : STR.cleared, 15, medal ? CSS.ink : CSS.inkSoft, true).setOrigin(0, 0.5),
+      text(sc, 140, -10, STR.playback, 10, CSS.loop, true).setOrigin(1, 0.5),
+      text(sc, -110, 10, `${STR.selves(s.tracks.length, par)}   ${assisted ? STR.assisted : STR.bestTime(fmtTicks(r.best || s.t + 1))}`, 10, CSS.inkSoft).setOrigin(0, 0.5),
+      text(sc, 140, 10, STR.continue, 10, CSS.ink).setOrigin(1, 0.5)]).setDepth(40);
   }
 
   private next(): void {

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { RoomScene } from './scenes/RoomScene.ts';
 import { MenuScene } from './scenes/MenuScene.ts';
 import { SettingsScene } from './scenes/SettingsScene.ts';
+import { MixdownScene } from './scenes/MixdownScene.ts';
 import { ROOMS } from './rooms/index.ts';
 import { loadRoom } from './sim/room.ts';
 import { replay, solutionMasks } from './sim/replay.ts';
@@ -20,9 +21,10 @@ const game = new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [],
 });
-game.scene.add('menu', MenuScene, roomParam <= 0);
+game.scene.add('menu', MenuScene, roomParam <= 0 && !params.has('mixdown'));
 game.scene.add('room', RoomScene, roomParam > 0, { index: startIndex });
 game.scene.add('settings', SettingsScene, false);
+game.scene.add('mixdown', MixdownScene, params.has('mixdown'));
 
 // Hook for the e2e specs: same sim code as the shipped bundle.
 declare global {
