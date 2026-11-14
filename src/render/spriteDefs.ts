@@ -1,0 +1,56 @@
+// Every visual except the ground tiles is a PNG in src/sprites/<key>.png.
+// Sizes below are in game pixels (1 tile = 20). A file can be drawn at any whole multiple of that size:
+// the shipped files are 2x; 1x pixel art is shown with crisp, unsmoothed pixels.
+// ox/oy: where the 18x20 body box starts inside the sprite. slice: nine-slice border (stretchable sprites).
+export interface SpriteDef { w: number; h: number; ox?: number; oy?: number; slice?: number; tile?: boolean }
+
+const actor = { w: 26, h: 28, ox: 4, oy: 5 };
+
+export const SPRITES: Record<string, SpriteDef> = {
+  paper: { w: 640, h: 420 },
+  hud_bar: { w: 640, h: 60 },
+  live_idle: actor,
+  live_blink: actor,
+  live_jump: actor,
+  live_fall: actor,
+  drone: actor,
+  loop: actor,
+  digit_1: { w: 3, h: 5 },
+  digit_2: { w: 3, h: 5 },
+  digit_3: { w: 3, h: 5 },
+  digit_4: { w: 3, h: 5 },
+  ghost: { w: 20, h: 22, ox: 1, oy: 1 },
+  loop_dot: { w: 2, h: 2 },
+  static_top: { w: 20, h: 20 },
+  static_fill: { w: 20, h: 20 },
+  drum: { w: 20, h: 20 },
+  pad: { w: 40, h: 20 },
+  out: { w: 20, h: 40 },
+  mute: { w: 20, h: 20 },
+  emitter: { w: 20, h: 20 },
+  beam_on: { w: 20, h: 8 },
+  beam_off: { w: 20, h: 8 },
+  switch_up: { w: 40, h: 20, slice: 6 },
+  switch_down: { w: 40, h: 20, slice: 6 },
+  glyph_0: { w: 8, h: 8 },
+  glyph_1: { w: 8, h: 8 },
+  glyph_2: { w: 8, h: 8 },
+  glyph_3: { w: 8, h: 8 },
+  gate_closed: { w: 20, h: 20 },
+  gate_open: { w: 20, h: 20, slice: 5, tile: true },
+  particle: { w: 4, h: 4 },
+  slot: { w: 24, h: 24 },
+  slot_full: { w: 24, h: 24 },
+  slot_locked: { w: 24, h: 24 },
+  beat_on: { w: 10, h: 10 },
+  beat_off: { w: 10, h: 10 },
+  ff: { w: 16, h: 12 },
+  medal: { w: 20, h: 20 },
+  tick: { w: 18, h: 4 },
+  keycap: { w: 16, h: 14, slice: 4 },
+  panel: { w: 32, h: 32, slice: 10 },
+  button: { w: 24, h: 16, slice: 6 },
+  cell: { w: 84, h: 40, slice: 8 },
+  cell_on: { w: 84, h: 40, slice: 8 },
+  cell_locked: { w: 84, h: 40, slice: 8 },
+};
