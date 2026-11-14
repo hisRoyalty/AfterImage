@@ -12,6 +12,9 @@ import { Hud, VIEW_W, VIEW_H } from '../render/hud.ts';
 import { MONO, CSS } from '../render/palette.ts';
 import { input, settings } from '../meta/game.ts';
 import { STR } from '../meta/strings.ts';
+import { keyLabel } from '../meta/input.ts';
+import type { Action } from '../meta/input.ts';
+import { initAudio } from '../audio/engine.ts';
 import { RoomFlow } from './roomFlow.ts';
 
 const STEP_MS = 1000 / 60;
@@ -35,6 +38,7 @@ export class RoomScene extends Phaser.Scene {
   frames = 0;
   fpsT = 0;
   fps = 60;
+  lastNow = 0;
 
   constructor() {
     super('room');
@@ -58,12 +62,16 @@ export class RoomScene extends Phaser.Scene {
     this.hud = new Hud(this);
     const p = json.par.drones + json.par.loops;
     const parTxt = p === 0 ? STR.parNone : [json.par.drones && `${json.par.drones}D`, json.par.loops && `${json.par.loops}L`].filter(Boolean).join('+');
-    this.hud.setRoom(Number(json.id.slice(1)), json.name, STR.par(parTxt, this.s.cap), this.room.loopsOk ? STR.keysAll : STR.keysCh1);
+    const k = (a: Action) => keyLabel(input.keys[a][0] ?? '');
+    const keys = [`${k('drone')} drone`, this.room.loopsOk ? `${k('loop')} loop` : '', `${k('erase')} erase`, `${k('retry')} retry`].filter(Boolean).join('   ');
+    this.hud.setRoom(Number(json.id.slice(1)), json.name, STR.par(parTxt, this.s.cap), keys);
     this.debugText = this.add.text(4, 4, '', { fontFamily: MONO, fontSize: '8px', color: CSS.ink, backgroundColor: '#F4EDE0CC', resolution: 3 }).setDepth(50).setVisible(false);
     this.flow = new RoomFlow(this);
     this.px = this.s.live.x;
     this.py = this.s.live.y;
     input.clear();
+    this.flow.start();
+    if (!settings().reducedMotion) { this.cameras.main.setZoom(2.08); this.tweens.add({ targets: this.cameras.main, zoom: 2, duration: 420, ease: 'Cubic.easeOut' }); }
     this.input.keyboard?.on('keydown-F1', () => { this.debug = !this.debug; this.debugText.setVisible(this.debug); });
   }
 
@@ -71,12 +79,13 @@ export class RoomScene extends Phaser.Scene {
   stepOnce(mask: number): void {
     const s = this.s;
     const takes = s.takes;
+    const preT = s.phase === PH_COUNTIN ? 0 : s.t;
     this.px = s.live.x;
     this.py = s.live.y;
     step(s, mask);
     this.ticks++;
     if (s.takes !== takes || s.phase === PH_COUNTIN) { this.px = s.live.x; this.py = s.live.y; }
-    this.flow.onEvents(s.ev);
+    this.flow.onEvents(s, s.ev, preT);
   }
 
   // Runs as many fixed steps as the elapsed time allows. Shared by play and the e2e pacing test.
@@ -97,12 +106,19 @@ export class RoomScene extends Phaser.Scene {
       if (this.flow.blocking()) continue;
       this.ff = input.held('ff') && this.s.phase !== PH_CLEAR;
       const reps = this.ff ? 4 : 1;
-      for (let r = 0; r < reps && this.s.phase !== PH_CLEAR; r++) this.stepOnce(input.simMask(this.ff));
+      for (let r = 0; r < reps && this.s.phase !== PH_CLEAR; r++) {
+        const m = input.simMask(this.ff);
+        if (m) { this.flow.booth.input(); initAudio(); }
+        this.stepOnce(m);
+      }
     }
     if (n === 5) this.acc = Math.min(this.acc, STEP_MS);
   }
 
-  update(time: number, delta: number): void {
+  update(time: number): void {
+    const now = performance.now();
+    const delta = this.lastNow ? Math.min(250, now - this.lastNow) : 16.7;
+    this.lastNow = now;
     if (!this.scripted) this.flow.update(delta);
     this.advance(delta);
     this.frames++;
@@ -131,7 +147,7 @@ export class RoomScene extends Phaser.Scene {
       const ly = (this.py + (s.live.y - this.py) * a) / SUB;
       drawLive(g, lx, ly, this.flow.pose(s));
     }
-    this.flow.drawFx(g, now);
+    this.flow.drawFx(g);
     this.hud.draw(s, input.wipeProgress, this.ff, now);
     if (this.debug) this.drawDebug();
   }

@@ -20,3 +20,10 @@ describe('sim stays deterministic', () => {
     });
   }
 });
+
+import { LINES } from '../../src/narrator/lines.ts';
+describe('Booth lines', () => {
+  it('stay within 14 words', () => {
+    for (const [k, pool] of Object.entries(LINES)) for (const list of pool) for (const l of list) expect(l.split(/\s+/).length, `${k}: ${l}`).toBeLessThanOrEqual(14);
+  });
+});

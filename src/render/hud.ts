@@ -16,6 +16,7 @@ export class Hud {
   par: Phaser.GameObjects.Text;
   keys: Phaser.GameObjects.Text;
   booth: Phaser.GameObjects.Text;
+  hint: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.g = scene.add.graphics().setDepth(20);
@@ -23,6 +24,7 @@ export class Hud {
     this.title = scene.add.text(10, HUD_Y + 7, '', { ...style, fontSize: '13px', fontStyle: 'bold' }).setDepth(21);
     this.par = scene.add.text(10, HUD_Y + 34, '', { ...style, color: CSS.inkSoft }).setDepth(21);
     this.keys = scene.add.text(VIEW_W - 10, HUD_Y + 9, '', { ...style, color: CSS.inkSoft }).setOrigin(1, 0).setDepth(21);
+    this.hint = scene.add.text(VIEW_W - 10, HUD_Y + 34, '', { ...style, color: CSS.wire, fontStyle: 'bold' }).setOrigin(1, 0).setDepth(21);
     this.booth = scene.add.text(400, HUD_Y + 41, '', { ...style, fontSize: '12px', fontStyle: 'italic' }).setOrigin(0.5, 0.5).setDepth(21);
   }
 
@@ -85,7 +87,11 @@ export class Hud {
     }
   }
 
-  say(text: string): void {
-    this.booth.setText(text ? `${STR.booth}: ${text}` : '');
+  say(text: string, isHint = false): void {
+    this.booth.setText(text ? (isHint ? text : `${STR.booth}: ${text}`) : '').setColor(isHint ? CSS.wire : CSS.ink);
+  }
+
+  setHint(t: string): void {
+    if (this.hint.text !== t) this.hint.setText(t);
   }
 }

@@ -1,0 +1,129 @@
+import Phaser from 'phaser';
+import type { RoomScene } from './RoomScene.ts';
+import type { RoomFlow } from './roomFlow.ts';
+import { Menu, panel, text } from './ui.ts';
+import type { Item } from './ui.ts';
+import { ROOMS } from '../rooms/index.ts';
+import { input, settings } from '../meta/game.ts';
+import { room as roomSave } from '../meta/save.ts';
+import { STR, UI, fmtTicks } from '../meta/strings.ts';
+import { PAL, CSS } from '../render/palette.ts';
+import { sfx } from '../audio/sfx.ts';
+
+// Chapter card, pause menu and the clear panel for a room.
+export class Overlays {
+  scene: RoomScene;
+  flow: RoomFlow;
+  card: Phaser.GameObjects.Container | null = null;
+  cardT = 0;
+  pause: Menu | null = null;
+  pauseBg: Phaser.GameObjects.Graphics | null = null;
+  panel: Phaser.GameObjects.Container | null = null;
+
+  constructor(scene: RoomScene, flow: RoomFlow) {
+    this.scene = scene;
+    this.flow = flow;
+    scene.events.on('resume', () => { input.clear(); this.pause?.refresh(); });
+  }
+
+  start(): void {
+    const i = this.scene.index;
+    const ch = ROOMS[i].chapter;
+    if (i === 0 || ROOMS[i - 1].chapter !== ch) this.showCard(ch);
+  }
+
+  private showCard(ch: number): void {
+    const sc = this.scene;
+    const g = sc.add.graphics();
+    g.fillStyle(PAL.paper, 0.96);
+    g.fillRect(0, 0, 640, 420);
+    g.fillStyle(PAL.ink, 1);
+    g.fillRect(220, 214, 200, 2);
+    this.card = sc.add.container(0, 0, [g,
+      text(sc, 320, 190, STR.chapter[ch], 26, CSS.ink, true).setOrigin(0.5),
+      text(sc, 320, 236, STR.chapterSub[ch], 13, CSS.inkSoft).setOrigin(0.5)]).setDepth(80);
+    this.cardT = 2200;
+  }
+
+  blocking(): boolean {
+    return !!this.card || !!this.pause;
+  }
+
+  update(dt: number): void {
+    if (this.card) {
+      this.cardT -= dt;
+      const skip = input.pressed('confirm') || input.pressed('jump');
+      this.card.setAlpha(Math.min(1, this.cardT / 400));
+      if (this.cardT <= 0 || skip) { this.card.destroy(); this.card = null; input.clear(); }
+      return;
+    }
+    if (this.panel) {
+      if (input.pressed('confirm')) this.next();
+      return;
+    }
+    if (this.pause) {
+      const r = this.pause.update(input.takeCodes());
+      if (r === 'back') this.closePause();
+      return;
+    }
+    if (input.pressed('pause')) this.openPause();
+    else if (input.pressed('hint')) this.flow.showHint();
+  }
+
+  private openPause(): void {
+    sfx('back');
+    input.clear();
+    this.pauseBg = panel(this.scene, 200, 190, 60);
+    const items: Item[] = [
+      { label: () => UI.resume, act: () => this.closePause() },
+      { label: () => UI.retryRoom, act: () => this.scene.scene.restart({ index: this.scene.index }) },
+    ];
+    if (this.flow.hintOffered()) items.push({ label: () => UI.hint, act: () => { this.closePause(); this.flow.showHint(); } });
+    items.push(
+      { label: () => UI.settings, act: () => { this.scene.scene.pause(); this.scene.scene.launch('settings', { from: 'room' }); } },
+      { label: () => UI.rooms, act: () => this.scene.scene.start('menu', { select: true, index: this.scene.index }) },
+      { label: () => UI.toTitle, act: () => this.scene.scene.start('menu') },
+    );
+    this.pause = new Menu(this.scene, 320, 210 - (items.length - 1) * 11, items, 22, 13, 62);
+    this.pause.onMove = () => sfx('ui');
+  }
+
+  private closePause(): void {
+    this.pause?.destroy();
+    this.pause = null;
+    this.pauseBg?.destroy();
+    this.pauseBg = null;
+    input.clear();
+  }
+
+  clearPanel(): void {
+    if (this.panel) return;
+    input.clear();
+    const sc = this.scene;
+    const s = sc.s;
+    const json = s.room.json;
+    const par = json.par.drones + json.par.loops;
+    const r = roomSave(json.id);
+    const st = settings();
+    const assisted = st.assistTiming || st.assistTrack || st.assistSpeed < 100;
+    const medal = !assisted && s.tracks.length <= par;
+    const bg = sc.add.graphics();
+    bg.fillStyle(PAL.paper, 0.95);
+    bg.fillRoundedRect(-120, -54, 240, 108, 8);
+    bg.lineStyle(2, PAL.ink, 1);
+    bg.strokeRoundedRect(-120, -54, 240, 108, 8);
+    if (medal) { bg.fillStyle(PAL.wire, 1); bg.fillCircle(-92, -32, 9); bg.fillStyle(PAL.paper, 1); bg.fillCircle(-92, -32, 4); }
+    this.panel = sc.add.container(320, 176, [bg,
+      text(sc, 0, -32, medal ? STR.cleanTake : STR.cleared, 18, medal ? CSS.ink : CSS.inkSoft, true).setOrigin(0.5),
+      text(sc, 0, -8, STR.selves(s.tracks.length, par), 12).setOrigin(0.5),
+      text(sc, 0, 10, assisted ? STR.assisted : STR.bestTime(fmtTicks(r.best || s.t + 1)), 11, CSS.inkSoft).setOrigin(0.5),
+      text(sc, 0, 36, STR.continue, 11, CSS.inkSoft).setOrigin(0.5)]).setDepth(40);
+  }
+
+  private next(): void {
+    sfx('confirm');
+    const n = this.scene.index + 1;
+    if (n < ROOMS.length) this.scene.scene.start('room', { index: n });
+    else this.scene.scene.start(this.scene.scene.get('mixdown') ? 'mixdown' : 'menu');
+  }
+}
