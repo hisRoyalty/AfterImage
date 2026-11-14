@@ -60,7 +60,7 @@ export const UI = {
   menuHelp: 'arrows choose   Enter select',
   hintOffer: (k: string) => `${k} hint`,
   hintTier: (i: number, t: string) => `HINT ${i}/3  ${t}`,
-  credits: 'made with Phaser',
+  credits: 'music: Cozy Tunes by Pizza Doggy  ·  made with Phaser',
   musicLabel: 'Music volume',
   sfxLabel: 'Sound effects volume',
   musicShort: '♪',
