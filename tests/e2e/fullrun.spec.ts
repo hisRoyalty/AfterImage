@@ -16,7 +16,8 @@ test('fresh browser: title screen to the end of the Mixdown', async ({ page }) =
   await page.waitForFunction(() => !!window.__overdub);
   const hook = () => page.evaluate(() => (window as any).__overdub.scene() as string[]);
   expect(await hook()).toContain('menu');
-  await page.keyboard.press('Enter'); // Start
+  await page.keyboard.press('Enter'); // Start (the title fades out first)
+  await page.waitForFunction(() => (window as any).__game.scene.isActive('room'));
   await page.waitForTimeout(300);
   for (const id of ids) {
     const r = await page.evaluate((t) => (window as any).__overdub.drive(t), takes(id));
