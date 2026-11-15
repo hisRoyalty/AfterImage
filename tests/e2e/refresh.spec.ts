@@ -13,14 +13,14 @@ test('progress survives a page refresh', async ({ page }) => {
   await page.waitForTimeout(200);
   await page.reload();
   await page.waitForFunction(() => !!window.__overdub);
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('overdub.save.v1') ?? '{}'));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('overdub.save.v2') ?? '{}'));
   expect(saved.rooms?.r01?.cleared).toBe(true);
   expect(saved.rooms?.r01?.medal).toBe(true);
   expect(saved.rooms?.r01?.best).toBeGreaterThan(0);
   // the title now offers Continue, and room 2 is unlocked in the select screen
   const unlocked = await page.evaluate(() => {
     const g = (window as any).__game;
-    return g.scene.getScene('menu').constructor && JSON.parse(localStorage.getItem('overdub.save.v1')!).rooms.r01.cleared;
+    return g.scene.getScene('menu').constructor && JSON.parse(localStorage.getItem('overdub.save.v2')!).rooms.r01.cleared;
   });
   expect(unlocked).toBe(true);
 });

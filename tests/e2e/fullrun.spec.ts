@@ -39,7 +39,7 @@ test('fresh browser: title screen to the end of the Mixdown', async ({ page }) =
   await page.keyboard.press('Enter');
   await page.waitForTimeout(500);
   expect(await hook()).toContain('menu');
-  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('overdub.save.v1')!));
+  const save = await page.evaluate(() => JSON.parse(localStorage.getItem('overdub.save.v2')!));
   expect(ids.every((id) => save.rooms[id]?.cleared)).toBe(true);
   expect(save.mixdown).toBe(true);
   expect(errors).toEqual([]);

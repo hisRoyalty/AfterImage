@@ -13,6 +13,7 @@ import { initScreen } from './meta/screen.ts';
 import { initPointer } from './meta/pointer.ts';
 import { playlist } from './audio/playlist.ts';
 import { getAudio } from './audio/engine.ts';
+import { load, save } from './meta/save.ts';
 
 const params = new URLSearchParams(location.search);
 const roomParam = Number(params.get('room') ?? 0);
@@ -27,6 +28,7 @@ const game = new Phaser.Game({
 });
 initScreen(game);
 initPointer();
+window.addEventListener('pagehide', save);
 mountAudioDock();
 game.registry.set('start', params.has('mixdown') ? { key: 'mixdown' } : roomParam > 0 ? { key: 'room', data: { index: startIndex } } : { key: 'menu' });
 game.registry.set('onReady', () => { window.__overdub = hook; });
@@ -43,6 +45,8 @@ declare global {
 (window as unknown as { __game: Phaser.Game }).__game = game;
 const hook = {
   rooms: () => ROOMS.map((r) => r.id),
+  save: () => load(),
+  wallet: () => load().wallet,
   replay: (id: string, takes: TakeLog[]) => {
     const json = ROOMS.find((r) => r.id === id);
     if (!json) return null;
