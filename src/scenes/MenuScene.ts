@@ -1,12 +1,17 @@
 import Phaser from 'phaser';
-import { Menu, text, UP, DOWN, LEFT, RIGHT, OK, BACK } from './ui.ts';
+import { text, UP, DOWN, LEFT, RIGHT, OK, BACK } from './ui.ts';
 import { ROOMS } from '../rooms/index.ts';
 import { load, room as roomSave } from '../meta/save.ts';
-import { input } from '../meta/game.ts';
+import { input, settings } from '../meta/game.ts';
 import { STR, UI, fmtTicks } from '../meta/strings.ts';
-import { PAL, CSS } from '../render/palette.ts';
+import { CSS, PAL } from '../render/palette.ts';
 import { img, nine, res } from '../render/sprites.ts';
-import { SelfSprite } from '../render/actorLayer.ts';
+import { Backdrop } from '../render/backdrop.ts';
+import { themeOf } from '../rooms/themes.ts';
+import { TITLE } from '../meta/titleStrings.ts';
+import { TitleLogo } from './titleLogo.ts';
+import { TitleMenu } from './titleMenu.ts';
+import { TitleAttract } from './titleAttract.ts';
 import { initAudio } from '../audio/engine.ts';
 import { sfx } from '../audio/sfx.ts';
 import { fitCamera, isFullscreen, toggleFullscreen } from '../meta/screen.ts';
@@ -24,7 +29,13 @@ export function nextRoom(): number {
 }
 
 export class MenuScene extends Phaser.Scene {
-  menu: Menu | null = null;
+  menu: TitleMenu | null = null;
+  logo: TitleLogo | null = null;
+  attract: TitleAttract | null = null;
+  backdrop!: Backdrop;
+  leaving = false;
+  lastNow = 0;
+  noteT = 0;
   mode: 'title' | 'select' = 'title';
   fs = false;
   sel = 0;
@@ -47,17 +58,37 @@ export class MenuScene extends Phaser.Scene {
     fitCamera(this);
     useCursor(this, 'menu');
     input.clear();
-    img(this, 'paper');
+    this.leaving = false;
+    this.lastNow = 0;
+    img(this, 'paper', 0, 0, -5);
+    // the backdrop of the chapter you are in; the night chapter and plain rooms fall back to dusk
+    const th = themeOf(ROOMS[nextRoom()]);
+    this.backdrop = new Backdrop(this, th === 'night' || th === 'plain' ? 'dusk' : th, -4);
+    this.add.graphics().setDepth(0.5).fillStyle(PAL.paper, 1).fillRect(0, 360, 640, 60); // clean band under the floor for the credits
     this.info = text(this, 320, 372, '', 11, CSS.ink).setOrigin(0.5).setDepth(6);
     this.help = text(this, 320, 398, '', 9, CSS.inkSoft).setOrigin(0.5).setDepth(6);
-    this.events.on('resume', () => { input.clear(); if (this.mode === 'title') this.title(); });
+    this.events.on('resume', () => { input.clear(); this.menu?.refresh(); });
     if (this.mode === 'title') this.title();
     else this.select();
+    this.cameras.main.fadeIn(160, 244, 237, 224);
+  }
+
+  // Fade to paper, then start the next scene. Only one transition at a time.
+  private goTo(key: string, data?: object, ms = 140): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    input.clear();
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(key, data));
+    this.cameras.main.fadeOut(ms, 244, 237, 224);
   }
 
   private clearAll(): void {
     this.menu?.destroy();
     this.menu = null;
+    this.logo?.destroy();
+    this.logo = null;
+    this.attract?.destroy();
+    this.attract = null;
     this.labels.forEach((l) => l.destroy());
     this.labels = [];
     this.objs.forEach((o) => o.destroy());
@@ -69,24 +100,32 @@ export class MenuScene extends Phaser.Scene {
   private title(): void {
     this.clearAll();
     this.mode = 'title';
-    this.labels.push(text(this, 320, 96, STR.title, 44, CSS.ink, true).setOrigin(0.5).setDepth(6));
-    this.labels.push(text(this, 320, 130, STR.subtitle, 12, CSS.inkSoft).setOrigin(0.5).setDepth(6));
-    const drone = new SelfSprite(this, 6);
-    const loop = new SelfSprite(this, 6);
-    drone.show({ kind: 0, x: 0, y: 0 }, 1, 292, 160);
-    loop.show({ kind: 1, xs: new Int32Array(1), ys: new Int32Array(1), n: 1, len: 60, notes: [] }, 2, 322, 160);
-    this.objs.push(img(this, 'live_idle', 262, 160, 6), drone.body, drone.num, loop.body, loop.num,
-      img(this, 'tick', 240, 181, 5).setDisplaySize(160, 4), img(this, 'glyph_0', 360, 170, 6).setOrigin(0.5).setTint(PAL.wire));
+    const still = settings().reducedMotion;
+    this.logo = new TitleLogo(this, 320, 74, 114, still);
+    this.attract = new TitleAttract(this, 1, still);
     const started = Object.values(load().rooms).some((r) => r.cleared);
-    this.menu = new Menu(this, 320, 230, [
+    this.menu = new TitleMenu(this, 320, 152, 21, [
       { label: () => (started ? UI.continue : UI.newGame), act: () => this.play(nextRoom()) },
-      { label: () => UI.rooms, act: () => this.select() },
-      { label: () => UI.settings, act: () => { this.scene.pause(); this.scene.launch('settings', { from: 'menu' }); } },
+      { label: () => UI.rooms, act: () => { sfx('confirm'); this.select(); } },
+      { label: () => TITLE.customize, act: () => this.customize() },
+      { label: () => UI.settings, act: () => { sfx('confirm'); this.scene.pause(); this.scene.launch('settings', { from: 'menu' }); } },
       { label: () => UI.fullscreen(isFullscreen()), act: () => toggleFullscreen() },
-    ], 24, 14, 10);
-    this.menu.onMove = () => sfx('ui');
-    this.help.setText(UI.menuHelp);
+    ], still);
+    this.help.setText(UI.menuHelp).setColor(CSS.inkSoft);
     this.info.setText(UI.credits).setColor(CSS.inkSoft);
+  }
+
+  // The Customize scene is built separately; until it is registered the button only explains.
+  private customize(): void {
+    if (this.scene.manager.keys['Customize']) {
+      initAudio();
+      sfx('confirm');
+      this.goTo('Customize', { from: 'menu' });
+      return;
+    }
+    sfx('refuse');
+    this.help.setText(TITLE.customizeSoon).setColor(CSS.ink);
+    this.noteT = 2000;
   }
 
   private select(): void {
@@ -142,18 +181,27 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private play(i: number): void {
+    if (this.leaving) return;
     initAudio();
     sfx('confirm');
-    this.clearAll();
-    this.scene.start('room', { index: i });
+    this.goTo('room', { index: i });
   }
 
   update(): void {
-    const codes = input.takeCodes();
+    const now = performance.now();
+    const dt = this.lastNow ? Math.min(250, now - this.lastNow) : 16.7;
+    this.lastNow = now;
+    const still = settings().reducedMotion;
+    this.backdrop.update(dt, this.attract?.focusX ?? 320, still);
+    const codes = this.leaving ? [] : input.takeCodes();
     if (codes.length) initAudio();
     if (this.fs !== isFullscreen()) { this.fs = isFullscreen(); this.menu?.refresh(); }
     if (this.mode === 'title') {
-      this.menu?.update(codes);
+      if (this.noteT > 0 && (this.noteT -= dt) <= 0) this.help.setText(UI.menuHelp).setColor(CSS.inkSoft);
+      if (codes.length || this.input.activePointer.isDown) this.logo?.finishIntro();
+      this.logo?.update(dt);
+      this.attract?.update(dt);
+      this.menu?.update(codes, dt);
       return;
     }
     for (const c of codes) {
