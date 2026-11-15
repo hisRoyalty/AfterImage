@@ -22,6 +22,7 @@ export interface Settings {
   assistTrack: boolean;
   shake: boolean;
   track: number;
+  tutorial: boolean;
 }
 
 export interface SaveData {
@@ -31,6 +32,7 @@ export interface SaveData {
   keys: KeyMap;
   booth: string[];
   seenIntro: string[];
+  tutorial: string[]; // tutorial steps already done
   mixdown: boolean;
 }
 
@@ -42,10 +44,11 @@ export function defaultSave(): SaveData {
   return {
     v: 1,
     rooms: {},
-    settings: { master: 80, music: 70, sfx: 80, mute: false, reducedMotion: prefersReduced(), assistSpeed: 100, assistTiming: false, assistTrack: false, shake: true, track: 0 },
+    settings: { master: 80, music: 70, sfx: 80, mute: false, reducedMotion: prefersReduced(), assistSpeed: 100, assistTiming: false, assistTrack: false, shake: true, track: 0, tutorial: true },
     keys: structuredClone(DEFAULT_KEYS),
     booth: [],
     seenIntro: [],
+    tutorial: [],
     mixdown: false,
   };
 }

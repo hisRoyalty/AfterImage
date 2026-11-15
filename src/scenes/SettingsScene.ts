@@ -9,6 +9,7 @@ import { UI } from '../meta/strings.ts';
 import { CSS } from '../render/palette.ts';
 import { fitCamera } from '../meta/screen.ts';
 import { useCursor } from '../meta/pointer.ts';
+import { replayTutorial } from '../meta/tutorial.ts';
 import { applyAudioSettings } from '../audio/engine.ts';
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
@@ -56,11 +57,13 @@ export class SettingsScene extends Phaser.Scene {
       { label: () => UI.speed(st.assistSpeed), left: () => { st.assistSpeed = Math.max(60, st.assistSpeed - 20); this.changed(); }, right: () => { st.assistSpeed = Math.min(100, st.assistSpeed + 20); this.changed(); } },
       { label: () => UI.timing(st.assistTiming), act: () => { st.assistTiming = !st.assistTiming; this.changed(); } },
       { label: () => UI.track(st.assistTrack), act: () => { st.assistTrack = !st.assistTrack; this.changed(); } },
+      { label: () => UI.tutorial(st.tutorial), act: () => { st.tutorial = !st.tutorial; this.changed(); } },
+      { label: () => UI.replayTutorial, act: () => { replayTutorial(); st.tutorial = true; this.changed(); this.note.setText(UI.tutorialReset); } },
       { label: () => UI.controls, act: () => this.controls() },
       { label: () => (this.resetArmed ? UI.resetSure : UI.reset), act: () => this.reset() },
       { label: () => UI.back, act: () => this.close() },
     ];
-    this.menu = new Menu(this, 320, 70, items, 22, 12, 60);
+    this.menu = new Menu(this, 320, 58, items, 21, 12, 60);
   }
 
   private reset(): void {

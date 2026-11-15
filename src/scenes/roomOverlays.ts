@@ -6,9 +6,10 @@ import type { Item } from './ui.ts';
 import { ROOMS, MAIN } from '../rooms/index.ts';
 import { input, settings } from '../meta/game.ts';
 import { room as roomSave } from '../meta/save.ts';
-import { STR, UI, fmtTicks } from '../meta/strings.ts';
+import { STR, UI, TUT, fmtTicks } from '../meta/strings.ts';
 import { PAL, CSS } from '../render/palette.ts';
-import { img, nine } from '../render/sprites.ts';
+import { img, nine, res } from '../render/sprites.ts';
+import { keyIcon } from '../render/prompt.ts';
 import { sfx } from '../audio/sfx.ts';
 import { isFullscreen, toggleFullscreen } from '../meta/screen.ts';
 import { clickable, lastDevice } from '../meta/pointer.ts';
@@ -80,6 +81,14 @@ export class Overlays {
     else if (input.pressed('hint')) this.flow.showHint();
   }
 
+  private continueHint(sc: RoomScene): Phaser.GameObjects.GameObject[] {
+    const mouse = lastDevice() === 'mouse';
+    const tex = keyIcon(sc, mouse ? 'MouseLeft' : input.keys.confirm[0] ?? 'Enter');
+    if (!tex) return [text(sc, 140, 10, mouse ? STR.continueMouse : STR.continue, 10, CSS.ink).setOrigin(1, 0.5)];
+    const word = text(sc, 140, 10, TUT.continue, 10, CSS.ink).setOrigin(1, 0.5);
+    return [word, sc.add.image(140 - word.width - 10, 10, tex).setScale(14 / 16 / res(sc, tex)).setTint(PAL.ink)];
+  }
+
   // HUD pause button: same as the pause key.
   togglePause(): void {
     if (this.card || this.panel) return;
@@ -137,7 +146,7 @@ export class Overlays {
       text(sc, -110, -10, medal ? STR.cleanTake : STR.cleared, 15, medal ? CSS.ink : CSS.inkSoft, true).setOrigin(0, 0.5),
       text(sc, 140, -10, STR.playback, 10, CSS.loop, true).setOrigin(1, 0.5),
       text(sc, -110, 10, `${STR.selves(s.tracks.length, par)}   ${assisted ? STR.assisted : STR.bestTime(fmtTicks(r.best || s.t + 1))}`, 10, CSS.inkSoft).setOrigin(0, 0.5),
-      text(sc, 140, 10, lastDevice() === 'mouse' ? STR.continueMouse : STR.continue, 10, CSS.ink).setOrigin(1, 0.5)]).setDepth(40);
+      ...this.continueHint(sc)]).setDepth(40);
     clickable(sc.add.zone(320, 40, 300, 52).setDepth(41), () => this.next());
     this.videoHint = text(sc, 320, 76, STR.saveVideo, 9, CSS.inkSoft).setOrigin(0.5).setDepth(40).setVisible(false);
     clickable(this.videoHint, () => this.saveVideo());

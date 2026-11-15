@@ -13,7 +13,8 @@ import { Backdrop } from '../render/backdrop.ts';
 import { Door } from '../render/door.ts';
 import { themeOf } from '../rooms/themes.ts';
 import { SelfLayer, LiveSprite } from '../render/actorLayer.ts';
-import { nine, resizeNine, img, res } from '../render/sprites.ts';
+import { img, res } from '../render/sprites.ts';
+import { Prompt } from '../render/prompt.ts';
 import { Hud } from '../render/hud.ts';
 import { fitCamera, textRes } from '../meta/screen.ts';
 import { useCursor, setCursorMode } from '../meta/pointer.ts';
@@ -36,7 +37,7 @@ export class RoomScene extends Phaser.Scene {
   objects!: ObjectLayer;
   selves!: SelfLayer;
   live!: LiveSprite;
-  keycap!: Phaser.GameObjects.NineSlice;
+  prompt!: Prompt;
   backdrop!: Backdrop;
   door!: Door;
   dark: Phaser.GameObjects.Image | null = null;
@@ -46,7 +47,7 @@ export class RoomScene extends Phaser.Scene {
   music = new Music();
   recorder = new Recorder();
   debugText!: Phaser.GameObjects.Text;
-  cueText!: Phaser.GameObjects.Text;
+  frameMs = 16.7;
   debug = false;
   acc = 0;
   ff = false;
@@ -110,8 +111,7 @@ export class RoomScene extends Phaser.Scene {
     this.debugText = this.add.text(4, 4, '', { fontFamily: MONO, fontSize: '8px', color: CSS.ink, backgroundColor: '#F4EDE0CC', resolution: textRes() }).setDepth(50).setVisible(false);
     this.flow = new RoomFlow(this);
     this.flow.fx.attach(this, 8);
-    this.keycap = nine(this, 'keycap', 0, 0, 16, 14, 9).setVisible(false);
-    this.cueText = this.add.text(0, 0, '', { fontFamily: MONO, fontSize: '9px', color: CSS.ink, resolution: textRes() }).setOrigin(0.5).setDepth(9).setVisible(false);
+    this.prompt = new Prompt(this, 9);
     this.px = this.s.live.x;
     this.py = this.s.live.y;
     input.clear();
@@ -176,6 +176,7 @@ export class RoomScene extends Phaser.Scene {
     const now = performance.now();
     const delta = this.lastNow ? Math.min(250, now - this.lastNow) : 16.7;
     this.lastNow = now;
+    this.frameMs = delta;
     if (!this.scripted) { this.flow.update(delta); this.music.update(this.s, this.ff, delta); }
     this.advance(delta);
     this.backdrop.update(delta, (this.pb ?? this.s).live.x / SUB, settings().reducedMotion);
@@ -229,16 +230,7 @@ export class RoomScene extends Phaser.Scene {
       this.dark?.setPosition(lx + 9, ly + 10);
     }
     this.flow.drawFx(g);
-    const cue = this.pb ? null : this.flow.cue(s);
-    this.cueText.setVisible(!!cue);
-    this.keycap.setVisible(!!cue);
-    if (cue) {
-      const bob = Math.sin(now / 220) * 1.5;
-      const w = Math.max(14, cue.key.length * 6 + 6);
-      resizeNine(this.keycap, this, 'keycap', w, 14);
-      this.keycap.setPosition(cue.x - w / 2, cue.y - 7 + bob);
-      this.cueText.setText(cue.key).setPosition(cue.x, cue.y + bob);
-    }
+    this.prompt.show(this.pb ? null : this.flow.cue(s, this.frameMs), now, settings().reducedMotion);
     this.hud.draw(s, input.wipeProgress, this.ff, now);
     if (this.debug) this.drawDebug();
   }

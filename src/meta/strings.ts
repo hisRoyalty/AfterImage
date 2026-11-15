@@ -27,6 +27,23 @@ export function fmtTicks(t: number): string {
   return `${Math.floor(cs / 100)}.${String(cs % 100).padStart(2, '0')}s`;
 }
 
+// Tutorial prompt labels: a word or two next to a key icon.
+export const TUT = {
+  move: 'move',
+  jump: 'jump',
+  drone: 'leave a Drone',
+  stand: 'hop on',
+  stack: 'stack another',
+  erase: 'erase last',
+  loop: 'keep as a Loop',
+  ff: 'fast-forward',
+  wait: 'start the clock',
+  keep: 'keep the failed take',
+  retry: 'retry',
+  wipe: 'hold: wipe all',
+  continue: 'continue',
+};
+
 export const UI = {
   continue: 'Continue',
   newGame: 'Start',
@@ -47,6 +64,9 @@ export const UI = {
   timing: (on: boolean) => `Assist: longer coyote and buffer  ${on ? 'on' : 'off'}`,
   track: (on: boolean) => `Assist: extra track  ${on ? 'on' : 'off'}`,
   fullscreen: (on: boolean) => `Fullscreen  ${on ? 'on' : 'off'}`,
+  tutorial: (on: boolean) => `Tutorial prompts  ${on ? 'on' : 'off'}`,
+  replayTutorial: 'Replay tutorial',
+  tutorialReset: 'Tutorial will play again',
   controls: 'Controls',
   reset: 'Erase all progress',
   resetSure: 'Press again to erase everything',

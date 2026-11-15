@@ -6,6 +6,9 @@ export { SPRITES };
 
 const files = import.meta.glob<string>('../sprites/*.png', { eager: true, query: '?url', import: 'default' });
 
+// Key and mouse icons, one file per KeyboardEvent.code (plus MouseLeft): loaded as key_<code>.
+const keyFiles = import.meta.glob<string>('../sprites/keys/*.png', { eager: true, query: '?url', import: 'default' });
+
 export function spriteUrl(key: string): string {
   return files[`../sprites/${key}.png`] ?? '';
 }
@@ -14,6 +17,11 @@ export function preloadSprites(scene: Phaser.Scene): void {
   for (const key of Object.keys(SPRITES)) {
     const url = files[`../sprites/${key}.png`];
     if (url) scene.load.image(key, url);
+  }
+  for (const [path, url] of Object.entries(keyFiles)) {
+    const key = `key_${path.replace(/^.*\//, '').replace(/\.png$/, '')}`;
+    SPRITES[key] = { w: 16, h: 16 };
+    scene.load.image(key, url);
   }
 }
 

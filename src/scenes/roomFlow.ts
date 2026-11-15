@@ -14,6 +14,8 @@ import { Particles } from '../render/fx.ts';
 import { Booth } from '../narrator/booth.ts';
 import { sfx } from '../audio/sfx.ts';
 import { Overlays } from './roomOverlays.ts';
+import { Tutorial } from '../meta/tutorial.ts';
+import type { Cue } from '../meta/tutorial.ts';
 import { logsHash, keepGhosts } from '../meta/ghosts.ts';
 import type { Ghost } from '../meta/ghosts.ts';
 
@@ -36,6 +38,9 @@ export class RoomFlow {
   hintT = 0;
   hintTier = 0;
   deaths = 0;
+  tut: Tutorial;
+  private spots = new Map<number, number>();
+  private gentle = false;
   preVy = 0;
   ghosts: Ghost[] = [];
 
@@ -44,6 +49,7 @@ export class RoomFlow {
     const json = scene.room.json;
     this.booth = new Booth(json.id, json.chapter, load().booth, (t, ms) => this.say(t, ms));
     this.ov = new Overlays(scene, this);
+    this.tut = new Tutorial(json.id, json.chapter);
     scene.hud.onPause = () => this.ov.togglePause();
     scene.hud.onHint = () => this.showHint();
   }
@@ -62,7 +68,7 @@ export class RoomFlow {
   }
 
   onEvents(s: Session, ev: number[], preT: number): void {
-    if (ev.length) this.booth.events(s, ev, preT);
+    if (ev.length) { this.booth.events(s, ev, preT); this.tut.events(s, ev); }
     const lx = s.live.x / SUB + 9, ly = s.live.y / SUB + 20;
     const reduced = settings().reducedMotion;
     for (const e of ev) {
@@ -94,6 +100,7 @@ export class RoomFlow {
           if (d) this.fx.emit(d.xs[d.n - 1] / SUB + 9, d.ys[d.n - 1] / SUB + 10, reduced ? 6 : 16, cause === E.DIE_TAPE ? PAL.mute : PAL.danger, { speed: 90, life: 0.5 });
           if (!reduced) this.flash = 1;
           this.shake(120, 0.004);
+          this.sameSpot(s);
           break;
         }
         case E.EV_CLEAR: this.onClear(s); break;
@@ -182,17 +189,26 @@ export class RoomFlow {
     }
   }
 
-  // Wordless key-cap cue for the rooms that introduce a key.
-  cue(s: Session): { key: string; x: number; y: number } | null {
-    const id = s.room.json.id;
-    const lx = s.live.x / SUB, ly = s.live.y / SUB;
-    const free = s.tracks.length < s.cap;
-    if (!free || this.clearT >= 0 || this.ov.blocking()) return null;
-    if ((id === 'r01' || id === 'r02' || id === 'r03') && s.phase === PH_RUN && s.live.ground && s.t > 120 && s.tracks.length < (id === 'r02' ? 2 : 1))
-      return { key: keyLabel(input.keys.drone[0] ?? 'KeyX'), x: lx + 9, y: ly - 14 };
-    if (id === 'r07' && s.phase === PH_RUN && s.t >= 60 && s.tracks.length === 0) return { key: keyLabel(input.keys.loop[0] ?? 'KeyC'), x: lx + 9, y: ly - 14 };
-    if (id === 'r09' && s.phase !== PH_RUN && s.dead && s.tracks.length === 0) return { key: keyLabel(input.keys.loop[0] ?? 'KeyC'), x: lx + 9, y: ly - 14 };
-    return null;
+  // The tutorial prompt to show this frame, if any.
+  cue(s: Session, delta: number): Cue | null {
+    if (this.clearT >= 0 || this.ov.blocking()) return null;
+    return this.tut.update(s, delta, this.scene.ff, this.booth.takesSinceProgress);
+  }
+
+  // Three deaths in the same spot: offer the first, gentlest hint once, unasked.
+  private sameSpot(s: Session): void {
+    const d = s.dead;
+    if (!d || this.gentle) return;
+    const cell = Math.floor(d.xs[d.n - 1] / SUB / 40) * 100 + Math.floor(d.ys[d.n - 1] / SUB / 40);
+    const n = (this.spots.get(cell) ?? 0) + 1;
+    this.spots.set(cell, n);
+    if (n < 3 || this.hintTier > 0) return;
+    this.gentle = true;
+    this.hintTier = 1;
+    this.scene.hud.say(UI.hintTier(1, this.scene.room.json.hints[0]), true);
+    this.hintT = 7000;
+    this.boothT = 0;
+    sfx('hint');
   }
 
   pose(s: Session): LivePose {
