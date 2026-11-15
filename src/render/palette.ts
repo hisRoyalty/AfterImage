@@ -27,3 +27,14 @@ export const CSS = {
 
 export const FONT = '"Trebuchet MS", "Segoe UI", Verdana, sans-serif';
 export const MONO = '"Consolas", "Menlo", "Courier New", monospace';
+
+// Body colours the player can pick for the Live (Customize). None near hazard red, switch teal,
+// Drone slate, Loop purple or bounce blue, so every gameplay colour keeps one meaning.
+export const LIVE_COLOURS: Record<string, number> = {
+  yellow: 0xffc42e,
+  peach: 0xffae80,
+  pink: 0xff9fc6,
+  lime: 0xbfe35a,
+  mint: 0x7fdcb2,
+  sand: 0xe6c79a,
+};

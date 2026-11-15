@@ -4,6 +4,7 @@ import { MenuScene } from './scenes/MenuScene.ts';
 import { SettingsScene } from './scenes/SettingsScene.ts';
 import { MixdownScene } from './scenes/MixdownScene.ts';
 import { BootScene } from './scenes/BootScene.ts';
+import { CustomizeScene } from './scenes/CustomizeScene.ts';
 import { ROOMS } from './rooms/index.ts';
 import { loadRoom } from './sim/room.ts';
 import { replay, solutionMasks } from './sim/replay.ts';
@@ -36,6 +37,7 @@ game.scene.add('menu', MenuScene, false);
 game.scene.add('room', RoomScene, false);
 game.scene.add('settings', SettingsScene, false);
 game.scene.add('mixdown', MixdownScene, false);
+game.scene.add('Customize', CustomizeScene, false);
 game.scene.add('boot', BootScene, true);
 
 // Hook for the e2e specs: same sim code as the shipped bundle.

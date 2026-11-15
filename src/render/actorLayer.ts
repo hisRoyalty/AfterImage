@@ -7,6 +7,7 @@ import { PAL } from './palette.ts';
 import { img, res, SPRITES } from './sprites.ts';
 import { stampSprite } from './terrain.ts';
 import { RES } from './bake.ts';
+import { liveFrame, hatKey } from './liveLook.ts';
 
 export interface LivePose { sx: number; sy: number; face: number; blink: boolean }
 
@@ -42,18 +43,44 @@ export class SelfSprite {
 
 export class LiveSprite {
   im: Phaser.GameObjects.Image;
+  hat: Phaser.GameObjects.Image;
+  // A fixed hat for this sprite (Customize previews); null follows the player's look.
+  hatOverride: string | null = null;
+  private sync = () => this.syncHat();
+  private ev: Phaser.Events.EventEmitter;
 
   constructor(scene: Phaser.Scene, depth: number) {
     const d = SPRITES.live_idle;
     this.im = img(scene, 'live_idle', 0, 0, depth).setOrigin(((d.ox ?? 0) + 9) / d.w, ((d.oy ?? 0) + 20) / d.h);
+    const h = SPRITES.hat_tophat;
+    this.hat = img(scene, 'hat_tophat', 0, 0, depth + 0.05).setOrigin(((h.ox ?? 0) + 9) / h.w, ((h.oy ?? 0) + 20) / h.h).setVisible(false);
+    // callers move, fade and hide im directly, so the hat copies it just before each render
+    this.ev = scene.events;
+    this.ev.on('prerender', this.sync);
   }
 
   // x, y: top-left of the 18x20 body in game pixels.
   show(x: number, y: number, p: LivePose, vy = 0, ground = true): void {
-    const key = p.blink ? 'live_blink' : ground ? 'live_idle' : vy < -200 ? 'live_jump' : vy > 200 ? 'live_fall' : 'live_idle';
+    const base = p.blink ? 'live_blink' : ground ? 'live_idle' : vy < -200 ? 'live_jump' : vy > 200 ? 'live_fall' : 'live_idle';
+    const key = liveFrame(base);
     const r = res(this.im.scene, key);
     if (this.im.texture.key !== key) this.im.setTexture(key);
     this.im.setPosition(x + 9, y + 20).setScale(p.sx / r, p.sy / r).setFlipX(p.face < 0);
+  }
+
+  private syncHat(): void {
+    const im = this.im, hat = this.hat;
+    if (!im.scene || !hat.scene) {
+      this.ev.off('prerender', this.sync);
+      if (hat.scene) hat.destroy();
+      return;
+    }
+    const key = hatKey(this.hatOverride ?? undefined);
+    hat.setVisible(!!key && im.visible);
+    if (!key || !im.visible) return;
+    if (hat.texture.key !== key) hat.setTexture(key);
+    const k = res(im.scene, im.texture.key) / res(hat.scene, key);
+    hat.setPosition(im.x, im.y).setScale(im.scaleX * k, im.scaleY * k).setFlipX(im.flipX).setAlpha(im.alpha);
   }
 }
 

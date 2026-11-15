@@ -93,3 +93,14 @@ export const UI = {
   nextTrack: 'Next track',
   mixdown: 'Mixdown',
 };
+
+// Customize scene.
+export const CUSTOM = {
+  title: 'CUSTOMIZE',
+  colour: 'Colour',
+  hat: 'Hat',
+  help: 'arrows choose   Esc back',
+  note: 'Your selves keep their own colours, so every room still reads the same.',
+  colours: { yellow: 'Yellow', peach: 'Peach', pink: 'Pink', lime: 'Lime', mint: 'Mint', sand: 'Sand' } as Record<string, string>,
+  hats: { none: 'No hat', cans: 'Headphones', beanie: 'Beanie', tophat: 'Top hat', beret: 'Beret', cap: 'Cap', bow: 'Bow' } as Record<string, string>,
+};

@@ -6,6 +6,8 @@
 export interface SpriteDef { w: number; h: number; ox?: number; oy?: number; slice?: number; tile?: boolean; x?: number }
 
 const actor = { w: 26, h: 28, ox: 4, oy: 5 };
+// Hats: same feet line as the Live, with 12 px of headroom above the actor sprite.
+const hat = { w: 26, h: 40, ox: 4, oy: 17 };
 
 export const SPRITES: Record<string, SpriteDef> = {
   paper: { w: 640, h: 420 },
@@ -32,6 +34,12 @@ export const SPRITES: Record<string, SpriteDef> = {
   live_blink: actor,
   live_jump: actor,
   live_fall: actor,
+  hat_cans: hat,
+  hat_beanie: hat,
+  hat_tophat: hat,
+  hat_beret: hat,
+  hat_cap: hat,
+  hat_bow: hat,
   drone: actor,
   loop: actor,
   digit_1: { w: 3, h: 5 },

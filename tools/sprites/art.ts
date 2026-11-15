@@ -74,7 +74,45 @@ function cell(p: Pen, fill: number, stroke: number, a: number, wdt: number): voi
   p.lineStyle(wdt, stroke, a).strokeRoundedRect(1, 1, 82, 38, 5);
 }
 
+// Hats on a 26 x 40 canvas: the Live's body box starts at (4, 17), so its outline top is y 16 and its head spans x 3-23.
+const HATS: Record<string, (p: Pen) => void> = {
+  hat_cans: (p) => {
+    p.fillStyle(PAL.ink).fillRoundedRect(4, 12, 18, 3, 1.5).fillRect(3, 13, 2.5, 9).fillRect(20.5, 13, 2.5, 9);
+    p.fillStyle(PAL.ink).fillRoundedRect(0.5, 20, 5, 9, 2).fillRoundedRect(20.5, 20, 5, 9, 2);
+    p.fillStyle(PAL.paper).fillRect(2, 23, 1.5, 3).fillRect(22.5, 23, 1.5, 3);
+  },
+  hat_beanie: (p) => {
+    p.fillStyle(PAL.mute).fillRoundedRect(4.5, 8, 17, 10, { tl: 8, tr: 8, bl: 1, br: 1 });
+    p.lineStyle(1, PAL.inkTop, 0.35);
+    for (let x = 7.5; x < 20; x += 3) p.lineBetween(x, 10, x, 15);
+    p.fillStyle(PAL.inkTop).fillRoundedRect(3.5, 14.5, 19, 4, 2);
+    p.fillStyle(PAL.paper).fillCircle(13, 7.5, 2.6);
+    p.lineStyle(1, PAL.inkTop).strokeCircle(13, 7.5, 2.6);
+  },
+  hat_tophat: (p) => {
+    p.fillStyle(PAL.ink).fillRoundedRect(7, 2, 12, 14, 1.5);
+    p.fillStyle(PAL.live).fillRect(7, 11.5, 12, 2);
+    p.fillStyle(PAL.ink).fillRoundedRect(2.5, 14.5, 21, 3, 1.5);
+  },
+  hat_beret: (p) => {
+    p.fillStyle(PAL.ink).fillRoundedRect(4, 11.5, 20, 6, { tl: 4, tr: 6, bl: 2.5, br: 2.5 });
+    p.fillStyle(PAL.ink).fillRoundedRect(12.5, 9.5, 2, 3, 1);
+    p.fillStyle(PAL.inkTop).fillRect(6, 16, 15, 1);
+  },
+  hat_cap: (p) => {
+    p.fillStyle(PAL.inkTop).fillRoundedRect(4.5, 10, 16, 8, { tl: 7, tr: 7, bl: 0, br: 0 });
+    p.fillStyle(PAL.ink).fillRoundedRect(15, 15.5, 10, 2.5, 1.2);
+    p.fillStyle(PAL.ink).fillCircle(12.5, 10.5, 1.2);
+    p.lineStyle(1, PAL.paper, 0.5).lineBetween(12.5, 12, 12.5, 17);
+  },
+  hat_bow: (p) => {
+    p.fillStyle(PAL.inkTop).fillTriangle(9.5, 9, 14, 12.5, 9.5, 16).fillTriangle(18.5, 9, 14, 12.5, 18.5, 16);
+    p.fillStyle(PAL.ink).fillCircle(14, 12.5, 2);
+  },
+};
+
 export const ART: Record<string, (p: Pen) => void> = {
+  ...HATS,
   paper: (p) => {
     p.fillStyle(PAL.paper).fillRect(0, 0, 640, 420);
     p.lineStyle(1, PAL.paperDetail, 0.55);

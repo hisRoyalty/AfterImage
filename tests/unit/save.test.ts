@@ -33,6 +33,13 @@ describe('save migration', () => {
     expect(s.mixdown).toBe(true);
     expect(s.wallet).toEqual({ coins: 0, earned: 0, spent: 0, custom: 0, retro: false });
     expect(s.skins).toEqual({ owned: ['lead'], equipped: 'lead' });
+    expect(s.look).toEqual({ colour: 'yellow', hat: 'none' });
+  });
+
+  it('keeps a valid look and repairs a bad one', () => {
+    expect(migrate({ v: 2, look: { colour: 'mint', hat: 'tophat' } }).look).toEqual({ colour: 'mint', hat: 'tophat' });
+    expect(migrate({ v: 2, look: { colour: 'red', hat: 42 } }).look).toEqual({ colour: 'yellow', hat: 'none' });
+    expect(migrate({ v: 2, look: 'x' }).look).toEqual({ colour: 'yellow', hat: 'none' });
   });
 
   it('gives defaults for garbage', () => {
@@ -56,6 +63,7 @@ describe('save migration', () => {
     a.wallet.coins = 250;
     a.skins = { owned: ['lead', 'cans'], equipped: 'cans' };
     a.rooms.r01.score = 60;
+    a.look = { colour: 'pink', hat: 'beret' };
     const b = migrate(JSON.parse(JSON.stringify(a)));
     expect(b).toEqual({ ...a, wallet: { ...a.wallet, retro: false } });
   });

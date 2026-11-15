@@ -1,5 +1,7 @@
 import type { KeyMap } from './input.ts';
 import { DEFAULT_KEYS } from './input.ts';
+import { cleanLook, defaultLook } from './look.ts';
+import type { Look } from './look.ts';
 
 export interface RoomSave {
   cleared: boolean;
@@ -41,6 +43,7 @@ export interface SaveData {
   mixdown: boolean;
   wallet: Wallet;
   skins: SkinState;
+  look: Look; // body colour and hat (Customize)
 }
 
 const KEY = 'overdub.save.v2';
@@ -61,6 +64,7 @@ export function defaultSave(): SaveData {
     mixdown: false,
     wallet: { coins: 0, earned: 0, spent: 0, custom: 0, retro: true },
     skins: { owned: ['lead'], equipped: 'lead' },
+    look: defaultLook(),
   };
 }
 
@@ -92,6 +96,7 @@ export function migrate(raw: unknown): SaveData {
     keys: { ...d.keys, ...(isObj(p.keys) ? p.keys : {}) },
     wallet: { coins: nat(w.coins), earned: nat(w.earned), spent: nat(w.spent), custom: nat(w.custom), retro: raw.v === 1 ? false : w.retro !== false },
     skins: { owned, equipped: eq },
+    look: cleanLook(p.look),
   };
 }
 
