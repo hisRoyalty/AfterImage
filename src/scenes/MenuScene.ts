@@ -73,6 +73,16 @@ export class MenuScene extends Phaser.Scene {
     this.cameras.main.fadeIn(160, 244, 237, 224);
   }
 
+  // Title and room select share this scene: a quick dip to paper hides the swap.
+  private swap(build: () => void): void {
+    if (this.leaving) return;
+    const cam = this.cameras.main;
+    if (settings().reducedMotion) { build(); return; }
+    this.leaving = true;
+    cam.once('camerafadeoutcomplete', () => { build(); this.leaving = false; input.clear(); cam.fadeIn(120, 244, 237, 224); });
+    cam.fadeOut(90, 244, 237, 224);
+  }
+
   // Fade to paper, then start the next scene. Only one transition at a time.
   private goTo(key: string, data?: object, ms = 140): void {
     if (this.leaving) return;
@@ -106,7 +116,7 @@ export class MenuScene extends Phaser.Scene {
     const started = Object.values(load().rooms).some((r) => r.cleared);
     this.menu = new TitleMenu(this, 320, 152, 21, [
       { label: () => (started ? UI.continue : UI.newGame), act: () => this.play(nextRoom()) },
-      { label: () => UI.rooms, act: () => { sfx('confirm'); this.select(); } },
+      { label: () => UI.rooms, act: () => { sfx('confirm'); this.swap(() => this.select()); } },
       { label: () => TITLE.customize, act: () => this.customize() },
       { label: () => UI.settings, act: () => { sfx('confirm'); this.scene.pause(); this.scene.launch('settings', { from: 'menu' }); } },
       { label: () => UI.fullscreen(isFullscreen()), act: () => toggleFullscreen() },
@@ -151,7 +161,7 @@ export class MenuScene extends Phaser.Scene {
       this.labels.push(text(this, x + 6, y + 5, String(Number(r.id.slice(1))).padStart(2, '0'), 11, CSS.ink, true).setDepth(7));
     });
     const back = text(this, 40, 398, UI.backLink, 10, CSS.inkSoft).setOrigin(0, 0.5).setDepth(7);
-    clickable(back, () => { sfx('back'); this.title(); });
+    clickable(back, () => { sfx('back'); this.swap(() => this.title()); });
     this.labels.push(back);
     this.drawGrid();
   }
@@ -211,7 +221,7 @@ export class MenuScene extends Phaser.Scene {
       else if (UP.includes(c)) this.sel = (this.sel + n - 6) % n;
       else if (DOWN.includes(c)) this.sel = (this.sel + 6) % n;
       else if (OK.includes(c)) { if (unlocked(this.sel)) return this.play(this.sel); sfx('refuse'); continue; }
-      else if (BACK.includes(c)) { sfx('back'); return this.title(); }
+      else if (BACK.includes(c)) { sfx('back'); return this.swap(() => this.title()); }
       else continue;
       sfx('ui');
       this.drawGrid();
