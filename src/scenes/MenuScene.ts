@@ -10,6 +10,7 @@ import { SelfSprite } from '../render/actorLayer.ts';
 import { initAudio } from '../audio/engine.ts';
 import { sfx } from '../audio/sfx.ts';
 import { fitCamera, isFullscreen, toggleFullscreen } from '../meta/screen.ts';
+import { useCursor, clickable } from '../meta/pointer.ts';
 
 export function unlocked(i: number): boolean {
   if (i === 0) return true;
@@ -44,6 +45,7 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     fitCamera(this);
+    useCursor(this, 'menu');
     input.clear();
     img(this, 'paper');
     this.info = text(this, 320, 372, '', 11, CSS.ink).setOrigin(0.5).setDepth(6);
@@ -99,10 +101,19 @@ export class MenuScene extends Phaser.Scene {
       const box = nine(this, 'cell', x, y, 84, 36, 5);
       const tick = img(this, 'tick', x + 8, y + 24, 6);
       const medal = img(this, 'medal', x + 72, y + 12, 6).setOrigin(0.5).setScale(0.55 / res(this, 'medal'));
+      // mouse: hover selects, click plays
+      const zone = this.add.zone(x + 42, y + 18, 84, 36).setDepth(8);
+      clickable(zone, () => { if (unlocked(i)) this.play(i); else sfx('refuse'); }, (st) => {
+        if (st === 'over' && this.sel !== i) { this.sel = i; sfx('ui'); this.drawGrid(); }
+        box.setAlpha(st === 'down' ? 0.8 : 1);
+      });
       this.cells.push({ box, tick, medal });
-      this.objs.push(box, tick, medal);
+      this.objs.push(box, tick, medal, zone);
       this.labels.push(text(this, x + 6, y + 5, String(Number(r.id.slice(1))).padStart(2, '0'), 11, CSS.ink, true).setDepth(7));
     });
+    const back = text(this, 40, 398, UI.backLink, 10, CSS.inkSoft).setOrigin(0, 0.5).setDepth(7);
+    clickable(back, () => { sfx('back'); this.title(); });
+    this.labels.push(back);
     this.drawGrid();
   }
 

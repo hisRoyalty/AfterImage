@@ -11,6 +11,7 @@ import { PAL, CSS } from '../render/palette.ts';
 import { img, nine } from '../render/sprites.ts';
 import { sfx } from '../audio/sfx.ts';
 import { isFullscreen, toggleFullscreen } from '../meta/screen.ts';
+import { clickable, lastDevice } from '../meta/pointer.ts';
 
 // Chapter card, pause menu and the clear panel for a room.
 export class Overlays {
@@ -23,6 +24,7 @@ export class Overlays {
   panel: Phaser.GameObjects.Container | null = null;
   videoHint: Phaser.GameObjects.Text | null = null;
   leaving = false;
+  cardZone: Phaser.GameObjects.Zone | null = null;
   fs = false;
 
   constructor(scene: RoomScene, flow: RoomFlow) {
@@ -46,6 +48,8 @@ export class Overlays {
       text(sc, 320, 190, STR.chapter[ch], 26, CSS.ink, true).setOrigin(0.5),
       text(sc, 320, 236, STR.chapterSub[ch], 13, CSS.inkSoft).setOrigin(0.5)]).setDepth(80);
     this.cardT = 2200;
+    this.cardZone = sc.add.zone(320, 210, 640, 420).setDepth(81);
+    clickable(this.cardZone, () => { this.cardT = 0; });
   }
 
   blocking(): boolean {
@@ -57,11 +61,11 @@ export class Overlays {
       this.cardT -= dt;
       const skip = input.pressed('confirm') || input.pressed('jump');
       this.card.setAlpha(Math.min(1, this.cardT / 400));
-      if (this.cardT <= 0 || skip) { this.card.destroy(); this.card = null; input.clear(); }
+      if (this.cardT <= 0 || skip) { this.card.destroy(); this.card = null; this.cardZone?.destroy(); this.cardZone = null; input.clear(); }
       return;
     }
     if (this.panel) {
-      if (input.takeCodes().includes('KeyV') && this.scene.recorder.blob) { this.scene.recorder.download(`overdub-${this.scene.room.json.id}.webm`); sfx('confirm'); }
+      if (input.takeCodes().includes('KeyV')) this.saveVideo();
       this.videoHint?.setVisible(!!this.scene.recorder.blob);
       if (input.pressed('confirm')) this.next();
       return;
@@ -74,6 +78,19 @@ export class Overlays {
     }
     if (input.pressed('pause')) this.openPause();
     else if (input.pressed('hint')) this.flow.showHint();
+  }
+
+  // HUD pause button: same as the pause key.
+  togglePause(): void {
+    if (this.card || this.panel) return;
+    if (this.pause) this.closePause();
+    else this.openPause();
+  }
+
+  private saveVideo(): void {
+    if (!this.scene.recorder.blob) return;
+    this.scene.recorder.download(`overdub-${this.scene.room.json.id}.webm`);
+    sfx('confirm');
   }
 
   private openPause(): void {
@@ -120,8 +137,10 @@ export class Overlays {
       text(sc, -110, -10, medal ? STR.cleanTake : STR.cleared, 15, medal ? CSS.ink : CSS.inkSoft, true).setOrigin(0, 0.5),
       text(sc, 140, -10, STR.playback, 10, CSS.loop, true).setOrigin(1, 0.5),
       text(sc, -110, 10, `${STR.selves(s.tracks.length, par)}   ${assisted ? STR.assisted : STR.bestTime(fmtTicks(r.best || s.t + 1))}`, 10, CSS.inkSoft).setOrigin(0, 0.5),
-      text(sc, 140, 10, STR.continue, 10, CSS.ink).setOrigin(1, 0.5)]).setDepth(40);
+      text(sc, 140, 10, lastDevice() === 'mouse' ? STR.continueMouse : STR.continue, 10, CSS.ink).setOrigin(1, 0.5)]).setDepth(40);
+    clickable(sc.add.zone(320, 40, 300, 52).setDepth(41), () => this.next());
     this.videoHint = text(sc, 320, 76, STR.saveVideo, 9, CSS.inkSoft).setOrigin(0.5).setDepth(40).setVisible(false);
+    clickable(this.videoHint, () => this.saveVideo());
   }
 
   private next(): void {

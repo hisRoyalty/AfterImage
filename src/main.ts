@@ -10,6 +10,7 @@ import { replay, solutionMasks } from './sim/replay.ts';
 import type { TakeLog } from './sim/types.ts';
 import { mountAudioDock } from './meta/audioDock.ts';
 import { initScreen } from './meta/screen.ts';
+import { initPointer } from './meta/pointer.ts';
 import { playlist } from './audio/playlist.ts';
 import { getAudio } from './audio/engine.ts';
 
@@ -25,6 +26,7 @@ const game = new Phaser.Game({
   scene: [],
 });
 initScreen(game);
+initPointer();
 mountAudioDock();
 game.registry.set('start', params.has('mixdown') ? { key: 'mixdown' } : roomParam > 0 ? { key: 'room', data: { index: startIndex } } : { key: 'menu' });
 game.registry.set('onReady', () => { window.__overdub = hook; });

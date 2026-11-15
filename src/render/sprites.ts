@@ -6,6 +6,10 @@ export { SPRITES };
 
 const files = import.meta.glob<string>('../sprites/*.png', { eager: true, query: '?url', import: 'default' });
 
+export function spriteUrl(key: string): string {
+  return files[`../sprites/${key}.png`] ?? '';
+}
+
 export function preloadSprites(scene: Phaser.Scene): void {
   for (const key of Object.keys(SPRITES)) {
     const url = files[`../sprites/${key}.png`];

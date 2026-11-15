@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CSS, FONT, PAL } from '../render/palette.ts';
 import { nine, resizeNine } from '../render/sprites.ts';
 import { textRes } from '../meta/screen.ts';
+import { clickable } from '../meta/pointer.ts';
 
 export interface Item {
   label: () => string;
@@ -27,20 +28,39 @@ export class Menu {
   texts: Phaser.GameObjects.Text[] = [];
   cursor = 0;
   bar: Phaser.GameObjects.NineSlice;
+  zones: Phaser.GameObjects.Zone[] = [];
+  private pressed = -1;
   scene: Phaser.Scene;
   x: number;
   y: number;
   gap: number;
   onMove: (() => void) | null = null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, items: Item[], gap = 20, size = 13, depth = 60) {
+  constructor(scene: Phaser.Scene, x: number, y: number, items: Item[], gap = 20, size = 13, depth = 60, width = 280) {
     this.items = items;
     this.x = x;
     this.y = y;
     this.gap = gap;
     this.scene = scene;
     this.bar = nine(scene, 'button', 0, 0, 24, 16, depth);
-    items.forEach((it, i) => this.texts.push(text(scene, x, y + i * gap, it.label(), size).setOrigin(0.5, 0.5).setDepth(depth + 1)));
+    items.forEach((it, i) => {
+      this.texts.push(text(scene, x, y + i * gap, it.label(), size).setOrigin(0.5, 0.5).setDepth(depth + 1));
+      // mouse: hovering moves the same highlight the keyboard does; a click acts, or steps a slider by the half clicked
+      const z = scene.add.zone(x, y + i * gap, width, gap).setDepth(depth + 2);
+      clickable(z, () => {
+        const p = scene.input.activePointer;
+        if (it.act) it.act();
+        else if (p.worldX < this.x) it.left?.();
+        else it.right?.();
+        if (this.texts.length) this.refresh();
+      }, (s) => {
+        if (!this.texts.length) return;
+        if (s === 'over' && this.cursor !== i) { this.cursor = i; this.onMove?.(); }
+        this.pressed = s === 'down' ? i : -1;
+        this.refresh();
+      });
+      this.zones.push(z);
+    });
     this.refresh();
   }
 
@@ -50,7 +70,8 @@ export class Menu {
     this.bar.setVisible(!!t);
     if (!t) return;
     resizeNine(this.bar, this.scene, 'button', t.width + 20, 16);
-    this.bar.setPosition(this.x - t.width / 2 - 10, t.y - 8);
+    this.bar.setPosition(this.x - t.width / 2 - 10, t.y - 8 + (this.pressed === this.cursor ? 1 : 0));
+    this.bar.setTint(this.pressed === this.cursor ? 0xd9d2c0 : 0xffffff);
   }
 
   update(codes: string[]): 'back' | null {
@@ -73,6 +94,8 @@ export class Menu {
   destroy(): void {
     this.texts.forEach((t) => t.destroy());
     this.bar.destroy();
+    this.zones.forEach((z) => z.destroy());
+    this.zones = [];
     this.texts = [];
   }
 }

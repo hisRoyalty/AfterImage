@@ -44,6 +44,8 @@ export class RoomFlow {
     const json = scene.room.json;
     this.booth = new Booth(json.id, json.chapter, load().booth, (t, ms) => this.say(t, ms));
     this.ov = new Overlays(scene, this);
+    scene.hud.onPause = () => this.ov.togglePause();
+    scene.hud.onHint = () => this.showHint();
   }
 
   start(): void {

@@ -16,6 +16,7 @@ import { SelfLayer, LiveSprite } from '../render/actorLayer.ts';
 import { nine, resizeNine, img, res } from '../render/sprites.ts';
 import { Hud } from '../render/hud.ts';
 import { fitCamera, textRes } from '../meta/screen.ts';
+import { useCursor, setCursorMode } from '../meta/pointer.ts';
 import { MONO, CSS } from '../render/palette.ts';
 import { input, settings } from '../meta/game.ts';
 import { STR } from '../meta/strings.ts';
@@ -77,6 +78,7 @@ export class RoomScene extends Phaser.Scene {
     this.ff = false;
     this.pb = null;
     fitCamera(this);
+    useCursor(this, 'play');
     const json = ROOMS[this.index];
     this.room = loadRoom(json);
     const st = settings();
@@ -178,6 +180,7 @@ export class RoomScene extends Phaser.Scene {
     this.advance(delta);
     this.backdrop.update(delta, (this.pb ?? this.s).live.x / SUB, settings().reducedMotion);
     this.door.update(delta, settings().reducedMotion);
+    setCursorMode(this.flow.blocking() ? 'menu' : 'play');
     this.frames++;
     if (time - this.fpsT > 500) { this.fps = (this.frames * 1000) / (time - this.fpsT); this.frames = 0; this.fpsT = time; }
     this.render(time);

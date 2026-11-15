@@ -144,6 +144,7 @@ export const ART: Record<string, (p: Pen) => void> = {
   slot_locked: (p) => p.fillStyle(PAL.paperDetail).fillRoundedRect(0, 0, 24, 24, 4),
   beat_on: (p) => p.fillStyle(PAL.ink).fillCircle(5, 5, 4),
   beat_off: (p) => p.fillStyle(PAL.paperDetail).fillCircle(5, 5, 3),
+  pause: (p) => { p.fillStyle(PAL.ink).fillRoundedRect(1.5, 1, 3.5, 10, 1).fillRoundedRect(7, 1, 3.5, 10, 1); },
   ff: (p) => { p.fillStyle(PAL.ink).fillTriangle(1, 1, 7, 6, 1, 11).fillTriangle(8, 1, 14, 6, 8, 11); },
   medal: (p) => { p.fillStyle(PAL.wire).fillCircle(10, 10, 8.5); p.fillStyle(PAL.paper).fillCircle(10, 10, 3.5); },
   tick: (p) => p.fillStyle(PAL.ink).fillRect(0, 0, 18, 3),

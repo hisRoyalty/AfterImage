@@ -17,6 +17,7 @@ import { CSS } from '../render/palette.ts';
 import { text } from './ui.ts';
 import { sfx } from '../audio/sfx.ts';
 import { fitCamera } from '../meta/screen.ts';
+import { useCursor } from '../meta/pointer.ts';
 import { voice, midiHz, getAudio } from '../audio/engine.ts';
 
 const PER_ROOM = 1300;
@@ -47,6 +48,7 @@ export class MixdownScene extends Phaser.Scene {
   title!: Phaser.GameObjects.Text;
   line!: Phaser.GameObjects.Text;
   done = false;
+  clicked = false;
 
   constructor() {
     super('mixdown');
@@ -54,6 +56,8 @@ export class MixdownScene extends Phaser.Scene {
 
   create(): void {
     fitCamera(this);
+    useCursor(this, 'menu');
+    this.input.on('pointerdown', () => { this.clicked = true; });
     this.t = 0;
     this.last = 0;
     this.idx = -1;
@@ -130,13 +134,15 @@ export class MixdownScene extends Phaser.Scene {
     const now = performance.now();
     const delta = this.last ? now - this.last : 16.7;
     this.last = now;
+    const click = this.clicked;
+    this.clicked = false;
     if (this.done) {
-      if (input.pressed('confirm')) this.scene.start('menu');
+      if (input.pressed('confirm') || click) this.scene.start('menu');
       return;
     }
     this.t += Math.min(delta, 100);
     // a short guard so an Enter meant for the clear banner cannot skip the reel
-    if (input.pressed('confirm') && this.t > 900) return this.finish();
+    if ((input.pressed('confirm') || click) && this.t > 900) return this.finish();
     if (this.t < INTRO) return;
     const i = Math.floor((this.t - INTRO) / PER_ROOM);
     if (i >= ROOMS.length) return this.finish();

@@ -7,6 +7,7 @@ import { img } from './sprites.ts';
 import { SelfSprite } from './actorLayer.ts';
 import { STR } from '../meta/strings.ts';
 import { textRes } from '../meta/screen.ts';
+import { clickable } from '../meta/pointer.ts';
 
 export const VIEW_W = 640;
 export const VIEW_H = 420;
@@ -24,6 +25,9 @@ export class Hud {
   beats: Phaser.GameObjects.Image[];
   pulse: Phaser.GameObjects.Image;
   ff: Phaser.GameObjects.Image;
+  pauseBtn!: Phaser.GameObjects.Image;
+  onPause: (() => void) | null = null;
+  onHint: (() => void) | null = null;
 
   constructor(scene: Phaser.Scene) {
     img(scene, 'hud_bar', 0, HUD_Y, 19);
@@ -36,8 +40,11 @@ export class Hud {
     const style = { fontFamily: FONT, fontSize: '11px', color: CSS.ink, resolution: textRes() };
     this.title = scene.add.text(10, HUD_Y + 7, '', { ...style, fontSize: '13px', fontStyle: 'bold' }).setDepth(21);
     this.par = scene.add.text(10, HUD_Y + 34, '', { ...style, color: CSS.inkSoft }).setDepth(21);
-    this.keys = scene.add.text(VIEW_W - 10, HUD_Y + 9, '', { ...style, color: CSS.inkSoft }).setOrigin(1, 0).setDepth(21);
+    this.pauseBtn = img(scene, 'pause', VIEW_W - 22, HUD_Y + 8, 21).setAlpha(0.55);
+    clickable(this.pauseBtn, () => this.onPause?.(), (s) => this.pauseBtn.setAlpha(s === 'idle' ? 0.55 : s === 'over' ? 1 : 0.8));
+    this.keys = scene.add.text(VIEW_W - 30, HUD_Y + 9, '', { ...style, color: CSS.inkSoft }).setOrigin(1, 0).setDepth(21);
     this.hint = scene.add.text(VIEW_W - 10, HUD_Y + 34, '', { ...style, color: CSS.wire, fontStyle: 'bold' }).setOrigin(1, 0).setDepth(21);
+    clickable(this.hint, () => this.onHint?.());
     this.booth = scene.add.text(400, HUD_Y + 41, '', { ...style, fontSize: '12px', fontStyle: 'italic' }).setOrigin(0.5, 0.5).setDepth(21);
   }
 

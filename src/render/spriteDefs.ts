@@ -63,6 +63,7 @@ export const SPRITES: Record<string, SpriteDef> = {
   beat_on: { w: 10, h: 10 },
   beat_off: { w: 10, h: 10 },
   ff: { w: 16, h: 12 },
+  pause: { w: 12, h: 12 },
   medal: { w: 20, h: 20 },
   tick: { w: 18, h: 4 },
   keycap: { w: 16, h: 14, slice: 4 },
