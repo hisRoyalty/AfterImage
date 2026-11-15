@@ -32,6 +32,7 @@ export class TitleMenu {
   private y: number;
   private gap: number;
   private still: boolean;
+  private drawn = '';
 
   constructor(scene: Phaser.Scene, x: number, y: number, gap: number, items: TitleItem[], still: boolean, depth = 10) {
     this.scene = scene;
@@ -55,6 +56,7 @@ export class TitleMenu {
   }
 
   refresh(): void {
+    this.drawn = '';
     this.items.forEach((it, i) => this.texts[i].setText(it.label()));
     this.place(true);
   }
@@ -99,6 +101,10 @@ export class TitleMenu {
     const y = this.from.y + (this.by - this.from.y) * e;
     const w = this.from.w + (this.bw - this.from.w) * e;
     const pressed = this.pressT > 0;
+    const settled = this.enterT > this.items.length * 35 + 160;
+    const key = `${Math.round(w)}|${x.toFixed(1)}|${y.toFixed(1)}|${pressed}|${settled}`;
+    if (key === this.drawn) return; // nothing moved this frame
+    this.drawn = key;
     resizeNine(this.bar, this.scene, 'button', Math.round(w), BAR_H);
     this.bar.setPosition(x, y + (pressed ? 1 : 0)).setTint(pressed ? 0xd9b64a : 0xffffff);
     this.texts.forEach((tx, i) => {
