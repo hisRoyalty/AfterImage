@@ -16,6 +16,7 @@ import { img } from '../render/sprites.ts';
 import { CSS } from '../render/palette.ts';
 import { text } from './ui.ts';
 import { sfx } from '../audio/sfx.ts';
+import { fitCamera } from '../meta/screen.ts';
 import { voice, midiHz, getAudio } from '../audio/engine.ts';
 
 const PER_ROOM = 1300;
@@ -52,7 +53,7 @@ export class MixdownScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setZoom(2).centerOn(320, 210);
+    fitCamera(this);
     this.t = 0;
     this.last = 0;
     this.idx = -1;

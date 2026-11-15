@@ -14,7 +14,8 @@ import { Door } from '../render/door.ts';
 import { themeOf } from '../rooms/themes.ts';
 import { SelfLayer, LiveSprite } from '../render/actorLayer.ts';
 import { nine, resizeNine, img, res } from '../render/sprites.ts';
-import { Hud, VIEW_W, VIEW_H } from '../render/hud.ts';
+import { Hud } from '../render/hud.ts';
+import { fitCamera, textRes } from '../meta/screen.ts';
 import { MONO, CSS } from '../render/palette.ts';
 import { input, settings } from '../meta/game.ts';
 import { STR } from '../meta/strings.ts';
@@ -75,7 +76,7 @@ export class RoomScene extends Phaser.Scene {
     this.lastNow = 0;
     this.ff = false;
     this.pb = null;
-    this.cameras.main.setZoom(2).centerOn(VIEW_W / 2, VIEW_H / 2);
+    fitCamera(this);
     const json = ROOMS[this.index];
     this.room = loadRoom(json);
     const st = settings();
@@ -104,11 +105,11 @@ export class RoomScene extends Phaser.Scene {
     const k = (a: Action) => keyLabel(input.keys[a][0] ?? '');
     const keys = [`${k('drone')} drone`, this.room.loopsOk ? `${k('loop')} loop` : '', `${k('erase')} erase`, `${k('retry')} retry`].filter(Boolean).join('   ');
     this.hud.setRoom(Number(json.id.slice(1)), json.name, STR.par(parTxt, this.s.cap), keys);
-    this.debugText = this.add.text(4, 4, '', { fontFamily: MONO, fontSize: '8px', color: CSS.ink, backgroundColor: '#F4EDE0CC', resolution: 3 }).setDepth(50).setVisible(false);
+    this.debugText = this.add.text(4, 4, '', { fontFamily: MONO, fontSize: '8px', color: CSS.ink, backgroundColor: '#F4EDE0CC', resolution: textRes() }).setDepth(50).setVisible(false);
     this.flow = new RoomFlow(this);
     this.flow.fx.attach(this, 8);
     this.keycap = nine(this, 'keycap', 0, 0, 16, 14, 9).setVisible(false);
-    this.cueText = this.add.text(0, 0, '', { fontFamily: MONO, fontSize: '9px', color: CSS.ink, resolution: 3 }).setOrigin(0.5).setDepth(9).setVisible(false);
+    this.cueText = this.add.text(0, 0, '', { fontFamily: MONO, fontSize: '9px', color: CSS.ink, resolution: textRes() }).setOrigin(0.5).setDepth(9).setVisible(false);
     this.px = this.s.live.x;
     this.py = this.s.live.y;
     input.clear();
@@ -116,7 +117,11 @@ export class RoomScene extends Phaser.Scene {
     this.events.once('shutdown', () => { this.music.stop(); this.recorder.stop(); });
     if (theme === 'night') this.cameras.main.fadeIn(180, 20, 18, 37);
     else this.cameras.main.fadeIn(180, 244, 237, 224);
-    if (!settings().reducedMotion) { this.cameras.main.setZoom(2.08); this.tweens.add({ targets: this.cameras.main, zoom: 2, duration: 420, ease: 'Cubic.easeOut' }); }
+    if (!settings().reducedMotion) {
+      const z = this.cameras.main.zoom;
+      this.cameras.main.setZoom(z * 1.04);
+      this.tweens.add({ targets: this.cameras.main, zoom: z, duration: 420, ease: 'Cubic.easeOut' });
+    }
     const f1 = () => { this.debug = !this.debug; this.debugText.setVisible(this.debug); };
     this.input.keyboard?.on('keydown-F1', f1);
     this.events.once('shutdown', () => this.input.keyboard?.off('keydown-F1', f1));

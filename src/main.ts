@@ -9,6 +9,7 @@ import { loadRoom } from './sim/room.ts';
 import { replay, solutionMasks } from './sim/replay.ts';
 import type { TakeLog } from './sim/types.ts';
 import { mountAudioDock } from './meta/audioDock.ts';
+import { initScreen } from './meta/screen.ts';
 import { playlist } from './audio/playlist.ts';
 import { getAudio } from './audio/engine.ts';
 
@@ -19,12 +20,11 @@ const startIndex = roomParam > 0 ? Math.max(0, ROOMS.findIndex((r) => Number(r.i
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
-  width: 1280,
-  height: 840,
-  backgroundColor: '#F4EDE0',
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  backgroundColor: '#1E1B26',
+  scale: { mode: Phaser.Scale.RESIZE, width: '100%', height: '100%', fullscreenTarget: document.documentElement },
   scene: [],
 });
+initScreen(game);
 mountAudioDock();
 game.registry.set('start', params.has('mixdown') ? { key: 'mixdown' } : roomParam > 0 ? { key: 'room', data: { index: startIndex } } : { key: 'menu' });
 game.registry.set('onReady', () => { window.__overdub = hook; });

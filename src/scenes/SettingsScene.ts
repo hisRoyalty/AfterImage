@@ -7,6 +7,7 @@ import { ACTIONS, DEFAULT_KEYS, keyLabel } from '../meta/input.ts';
 import type { Action } from '../meta/input.ts';
 import { UI } from '../meta/strings.ts';
 import { CSS } from '../render/palette.ts';
+import { fitCamera } from '../meta/screen.ts';
 import { applyAudioSettings } from '../audio/engine.ts';
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
@@ -27,7 +28,7 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setZoom(2).centerOn(320, 210);
+    fitCamera(this);
     panel(this, 360, 330);
     this.note = text(this, 320, 362, '', 10, CSS.inkSoft).setOrigin(0.5).setDepth(70);
     this.main();

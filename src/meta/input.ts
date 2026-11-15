@@ -1,7 +1,8 @@
+import { toggleFullscreen } from './screen.ts';
 import { IN_L, IN_R, IN_J, IN_JP, IN_WAIT, IN_DRONE, IN_LOOP, IN_ERASE, IN_RETRY, IN_WIPE } from '../sim/constants.ts';
 
-export type Action = 'left' | 'right' | 'jump' | 'wait' | 'drone' | 'loop' | 'erase' | 'retry' | 'ff' | 'hint' | 'pause' | 'confirm' | 'mute';
-export const ACTIONS: Action[] = ['left', 'right', 'jump', 'wait', 'drone', 'loop', 'erase', 'retry', 'ff', 'hint', 'pause', 'confirm', 'mute'];
+export type Action = 'left' | 'right' | 'jump' | 'wait' | 'drone' | 'loop' | 'erase' | 'retry' | 'ff' | 'hint' | 'pause' | 'confirm' | 'mute' | 'fullscreen';
+export const ACTIONS: Action[] = ['left', 'right', 'jump', 'wait', 'drone', 'loop', 'erase', 'retry', 'ff', 'hint', 'pause', 'confirm', 'mute', 'fullscreen'];
 
 export type KeyMap = Record<Action, string[]>;
 
@@ -16,9 +17,10 @@ export const DEFAULT_KEYS: KeyMap = {
   retry: ['KeyR'],
   ff: ['ShiftLeft', 'ShiftRight'],
   hint: ['KeyH'],
-  pause: ['Escape'],
+  pause: ['Escape', 'KeyP'],
   confirm: ['Enter'],
   mute: ['KeyM'],
+  fullscreen: ['KeyF'],
 };
 
 const WIPE_TICKS = 36;
@@ -43,6 +45,8 @@ export class Input {
     if (e.code === 'F1' || e.code === 'Tab' || e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
     if (this.onKey) { e.preventDefault(); this.onKey(e.code); return; }
     if (e.repeat) return;
+    // straight from the key event, so the browser accepts it as a user gesture
+    if (this.keys.fullscreen?.includes(e.code)) toggleFullscreen();
     this.down.add(e.code);
     this.codes.push(e.code);
     if (this.codes.length > 32) this.codes.shift();

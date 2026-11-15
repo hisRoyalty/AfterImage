@@ -9,6 +9,7 @@ import { img, nine, res } from '../render/sprites.ts';
 import { SelfSprite } from '../render/actorLayer.ts';
 import { initAudio } from '../audio/engine.ts';
 import { sfx } from '../audio/sfx.ts';
+import { fitCamera, isFullscreen, toggleFullscreen } from '../meta/screen.ts';
 
 export function unlocked(i: number): boolean {
   if (i === 0) return true;
@@ -24,6 +25,7 @@ export function nextRoom(): number {
 export class MenuScene extends Phaser.Scene {
   menu: Menu | null = null;
   mode: 'title' | 'select' = 'title';
+  fs = false;
   sel = 0;
   objs: Phaser.GameObjects.GameObject[] = [];
   cells: { box: Phaser.GameObjects.NineSlice; tick: Phaser.GameObjects.Image; medal: Phaser.GameObjects.Image }[] = [];
@@ -41,7 +43,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setZoom(2).centerOn(320, 210);
+    fitCamera(this);
     input.clear();
     img(this, 'paper');
     this.info = text(this, 320, 372, '', 11, CSS.ink).setOrigin(0.5).setDepth(6);
@@ -78,7 +80,8 @@ export class MenuScene extends Phaser.Scene {
       { label: () => (started ? UI.continue : UI.newGame), act: () => this.play(nextRoom()) },
       { label: () => UI.rooms, act: () => this.select() },
       { label: () => UI.settings, act: () => { this.scene.pause(); this.scene.launch('settings', { from: 'menu' }); } },
-    ], 26, 14, 10);
+      { label: () => UI.fullscreen(isFullscreen()), act: () => toggleFullscreen() },
+    ], 24, 14, 10);
     this.menu.onMove = () => sfx('ui');
     this.help.setText(UI.menuHelp);
     this.info.setText(UI.credits).setColor(CSS.inkSoft);
@@ -137,6 +140,7 @@ export class MenuScene extends Phaser.Scene {
   update(): void {
     const codes = input.takeCodes();
     if (codes.length) initAudio();
+    if (this.fs !== isFullscreen()) { this.fs = isFullscreen(); this.menu?.refresh(); }
     if (this.mode === 'title') {
       this.menu?.update(codes);
       return;

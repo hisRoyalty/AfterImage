@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { CSS, FONT, PAL } from '../render/palette.ts';
 import { nine, resizeNine } from '../render/sprites.ts';
+import { textRes } from '../meta/screen.ts';
 
 export interface Item {
   label: () => string;
@@ -17,7 +18,7 @@ export const OK = ['Enter', 'Space'];
 export const BACK = ['Escape', 'Backspace'];
 
 export function text(scene: Phaser.Scene, x: number, y: number, s: string, size = 12, color: string = CSS.ink, bold = false): Phaser.GameObjects.Text {
-  return scene.add.text(x, y, s, { fontFamily: FONT, fontSize: `${size}px`, color, fontStyle: bold ? 'bold' : 'normal', resolution: 3 });
+  return scene.add.text(x, y, s, { fontFamily: FONT, fontSize: `${size}px`, color, fontStyle: bold ? 'bold' : 'normal', resolution: textRes() });
 }
 
 // Vertical keyboard menu. update() returns 'back' when Escape is pressed.

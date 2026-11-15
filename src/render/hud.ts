@@ -6,6 +6,7 @@ import { PAL, CSS, FONT } from './palette.ts';
 import { img } from './sprites.ts';
 import { SelfSprite } from './actorLayer.ts';
 import { STR } from '../meta/strings.ts';
+import { textRes } from '../meta/screen.ts';
 
 export const VIEW_W = 640;
 export const VIEW_H = 420;
@@ -32,7 +33,7 @@ export class Hud {
     this.beats = [0, 1, 2, 3].map((b) => img(scene, 'beat_off', 339 + b * 11, HUD_Y + 14, 20).setOrigin(0.5));
     this.pulse = img(scene, 'beat_on', 339, HUD_Y + 14, 20.5).setOrigin(0.5);
     this.ff = img(scene, 'ff', 386, HUD_Y + 8, 20).setVisible(false);
-    const style = { fontFamily: FONT, fontSize: '11px', color: CSS.ink, resolution: 3 };
+    const style = { fontFamily: FONT, fontSize: '11px', color: CSS.ink, resolution: textRes() };
     this.title = scene.add.text(10, HUD_Y + 7, '', { ...style, fontSize: '13px', fontStyle: 'bold' }).setDepth(21);
     this.par = scene.add.text(10, HUD_Y + 34, '', { ...style, color: CSS.inkSoft }).setDepth(21);
     this.keys = scene.add.text(VIEW_W - 10, HUD_Y + 9, '', { ...style, color: CSS.inkSoft }).setOrigin(1, 0).setDepth(21);

@@ -45,6 +45,7 @@ export const UI = {
   speed: (v: number) => `Assist: game speed  ‹ ${v}% ›`,
   timing: (on: boolean) => `Assist: longer coyote and buffer  ${on ? 'on' : 'off'}`,
   track: (on: boolean) => `Assist: extra track  ${on ? 'on' : 'off'}`,
+  fullscreen: (on: boolean) => `Fullscreen  ${on ? 'on' : 'off'}`,
   controls: 'Controls',
   reset: 'Erase all progress',
   resetSure: 'Press again to erase everything',
@@ -53,7 +54,7 @@ export const UI = {
   defaults: 'Reset to defaults',
   action: {
     left: 'Move left', right: 'Move right', jump: 'Jump', wait: 'Wait', drone: 'Drone', loop: 'Loop', erase: 'Erase',
-    retry: 'Retry (hold to wipe)', ff: 'Fast-forward', hint: 'Hint', pause: 'Pause', confirm: 'Continue', mute: 'Mute',
+    retry: 'Retry (hold to wipe)', ff: 'Fast-forward', hint: 'Hint', pause: 'Pause', confirm: 'Continue', mute: 'Mute', fullscreen: 'Fullscreen',
   } as Record<string, string>,
   locked: 'locked',
   selectHelp: 'arrows choose   Enter play   Esc back',

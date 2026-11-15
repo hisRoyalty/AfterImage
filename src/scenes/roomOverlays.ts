@@ -10,6 +10,7 @@ import { STR, UI, fmtTicks } from '../meta/strings.ts';
 import { PAL, CSS } from '../render/palette.ts';
 import { img, nine } from '../render/sprites.ts';
 import { sfx } from '../audio/sfx.ts';
+import { isFullscreen, toggleFullscreen } from '../meta/screen.ts';
 
 // Chapter card, pause menu and the clear panel for a room.
 export class Overlays {
@@ -22,6 +23,7 @@ export class Overlays {
   panel: Phaser.GameObjects.Container | null = null;
   videoHint: Phaser.GameObjects.Text | null = null;
   leaving = false;
+  fs = false;
 
   constructor(scene: RoomScene, flow: RoomFlow) {
     this.scene = scene;
@@ -65,6 +67,7 @@ export class Overlays {
       return;
     }
     if (this.pause) {
+      if (this.fs !== isFullscreen()) { this.fs = isFullscreen(); this.pause.refresh(); }
       const r = this.pause.update(input.takeCodes());
       if (r === 'back') this.closePause();
       return;
@@ -76,7 +79,7 @@ export class Overlays {
   private openPause(): void {
     sfx('back');
     input.clear();
-    this.pauseBg = panel(this.scene, 200, 190, 60);
+    this.pauseBg = panel(this.scene, 200, 212, 60);
     const items: Item[] = [
       { label: () => UI.resume, act: () => this.closePause() },
       { label: () => UI.retryRoom, act: () => this.scene.scene.restart({ index: this.scene.index }) },
@@ -84,6 +87,7 @@ export class Overlays {
     if (this.flow.hintOffered()) items.push({ label: () => UI.hint, act: () => { this.closePause(); this.flow.showHint(); } });
     items.push(
       { label: () => UI.settings, act: () => { this.scene.scene.pause(); this.scene.scene.launch('settings', { from: 'room' }); } },
+      { label: () => UI.fullscreen(isFullscreen()), act: () => toggleFullscreen() },
       { label: () => UI.rooms, act: () => this.scene.scene.start('menu', { select: true, index: this.scene.index }) },
       { label: () => UI.toTitle, act: () => this.scene.scene.start('menu') },
     );
