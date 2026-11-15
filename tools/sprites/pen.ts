@@ -5,6 +5,7 @@ export class Pen {
   private ctx: CanvasRenderingContext2D;
   private fill = 'rgba(0,0,0,1)';
   private stroke = 'rgba(0,0,0,1)';
+  invert = false; // hole() paints a soft blob instead of a soft hole
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
@@ -74,8 +75,8 @@ export class Pen {
   // Fills w x h with colour, leaving a soft transparent hole (fully clear inside r0, opaque beyond r1).
   hole(w: number, h: number, cx: number, cy: number, r0: number, r1: number, c: number, a: number): this {
     const g = this.ctx.createRadialGradient(cx, cy, r0, cx, cy, r1);
-    g.addColorStop(0, this.rgba(c, 0));
-    g.addColorStop(1, this.rgba(c, a));
+    g.addColorStop(0, this.rgba(c, this.invert ? a : 0));
+    g.addColorStop(1, this.rgba(c, this.invert ? 0 : a));
     this.ctx.fillStyle = g;
     this.ctx.fillRect(0, 0, w, h);
     return this;

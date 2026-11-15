@@ -57,7 +57,8 @@ export class MixdownScene extends Phaser.Scene {
     this.last = 0;
     this.idx = -1;
     this.done = false;
-    this.gStatic = img(this, 'paper');
+    img(this, 'paper', 0, 0, -5);
+    this.gStatic = null;
     this.ghosts = Array.from({ length: 12 }, () => img(this, 'ghost', 0, 0, 4).setAlpha(0.35).setVisible(false));
     this.selves = [0, 1, 2, 3].map(() => new SelfSprite(this, 5));
     this.live = new LiveSprite(this, 6);
@@ -110,7 +111,7 @@ export class MixdownScene extends Phaser.Scene {
     load().mixdown = true;
     save();
     this.gStatic?.destroy();
-    this.gStatic = img(this, 'paper');
+    this.gStatic = null;
     this.ghosts.forEach((g) => g.setVisible(false));
     this.selves.forEach((sp) => sp.show(undefined, 1, 0, 0));
     this.live.im.setVisible(false);

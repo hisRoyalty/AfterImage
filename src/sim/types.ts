@@ -16,6 +16,7 @@ export interface RoomJson {
   entities: EntityJson[];
   hints: string[];
   loops?: boolean;
+  theme?: string; // backdrop theme (render only); defaults by chapter
   dark?: number; // light radius in px for the night chapter (render only)
 }
 

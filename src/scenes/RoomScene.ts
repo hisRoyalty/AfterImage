@@ -9,6 +9,8 @@ import type { Room } from '../sim/types.ts';
 import { ROOMS } from '../rooms/index.ts';
 import { bakeRoom } from '../render/terrain.ts';
 import { ObjectLayer } from '../render/objectLayer.ts';
+import { Backdrop } from '../render/backdrop.ts';
+import { themeOf } from '../rooms/themes.ts';
 import { SelfLayer, LiveSprite } from '../render/actorLayer.ts';
 import { nine, resizeNine, img, res } from '../render/sprites.ts';
 import { Hud, VIEW_W, VIEW_H } from '../render/hud.ts';
@@ -32,6 +34,7 @@ export class RoomScene extends Phaser.Scene {
   selves!: SelfLayer;
   live!: LiveSprite;
   keycap!: Phaser.GameObjects.NineSlice;
+  backdrop!: Backdrop;
   dark: Phaser.GameObjects.Image | null = null;
   gDyn!: Phaser.GameObjects.Graphics;
   hud!: Hud;
@@ -76,6 +79,9 @@ export class RoomScene extends Phaser.Scene {
     const st = settings();
     const tun = st.assistTiming ? assistTuning(TUNING) : TUNING;
     this.s = newSession(this.room, tun, st.assistTrack ? 1 : 0);
+    const theme = themeOf(json);
+    img(this, theme === 'night' ? 'paper_night' : 'paper', 0, 0, -5);
+    this.backdrop = new Backdrop(this, theme, -4);
     bakeRoom(this, this.room);
     this.objects = new ObjectLayer(this, this.s, 3);
     this.selves = new SelfLayer(this, 6);
@@ -161,6 +167,7 @@ export class RoomScene extends Phaser.Scene {
     this.lastNow = now;
     if (!this.scripted) { this.flow.update(delta); this.music.update(this.s, this.ff, delta); }
     this.advance(delta);
+    this.backdrop.update(delta, (this.pb ?? this.s).live.x / SUB, settings().reducedMotion);
     this.frames++;
     if (time - this.fpsT > 500) { this.fps = (this.frames * 1000) / (time - this.fpsT); this.frames = 0; this.fpsT = time; }
     this.render(time);

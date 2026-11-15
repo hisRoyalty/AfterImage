@@ -5,6 +5,7 @@ import type { Room } from '../sim/types.ts';
 import { PAL } from './palette.ts';
 import { res, SPRITES } from './sprites.ts';
 import { RES } from './bake.ts';
+import { themeOf } from '../rooms/themes.ts';
 
 type G = Phaser.GameObjects.Graphics;
 type RT = Phaser.GameObjects.RenderTexture;
@@ -41,11 +42,10 @@ export function stampSprite(scene: Phaser.Scene, rt: RT, key: string, x: number,
   rt.stamp(key, undefined, (x + d.w / 2) * RES, (y + d.h / 2) * RES, { originX: 0.5, originY: 0.5, scale: k, alpha: o.alpha ?? 1, tint: o.tint ?? 0xffffff, angle: o.angle ?? 0 });
 }
 
-// The whole static room as one image: paper, mute zones, ground, hazards, drumheads, pad, Out and emitters.
+// The static room on a transparent layer (the paper and backdrop sit behind it): mute zones, ground, hazards, drumheads, pad, Out and emitters.
 export function bakeRoom(scene: Phaser.Scene, room: Room, w = 640, h = 420, depth = 0): RT {
   const rt = scene.add.renderTexture(0, 0, w * RES, h * RES).setOrigin(0, 0).setScale(1 / RES).setDepth(depth);
-  const night = room.json.chapter === 6;
-  stampSprite(scene, rt, night ? 'paper_night' : 'paper', 0, 0);
+  const night = themeOf(room.json) === 'night';
   for (const m of room.mutes) {
     for (let y = px(m.y); y < px(m.y + m.h); y += TILE) for (let x = px(m.x); x < px(m.x + m.w); x += TILE) stampSprite(scene, rt, 'mute', x, y);
   }

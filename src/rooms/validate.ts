@@ -1,5 +1,6 @@
 import { COLS, ROWS } from '../sim/constants.ts';
 import type { RoomJson } from '../sim/types.ts';
+import { THEME_NAMES } from './themes.ts';
 
 const LEGAL = new Set(['#', '.', 'S', 'O', 'x', '=', 'm']);
 
@@ -13,6 +14,7 @@ export function validateRoom(r: RoomJson): string[] {
   if (r.par.drones + r.par.loops > r.tracks) err.push('par exceeds tracks');
   if (!Number.isInteger(r.note)) err.push('note must be an integer');
   if (r.hints?.length !== 3) err.push('need 3 hints');
+  if (r.theme !== undefined && !THEME_NAMES.includes(r.theme)) err.push(`unknown theme ${r.theme}`);
   if (r.grid.length !== ROWS) err.push(`grid has ${r.grid.length} rows`);
   let spawns = 0;
   let outs = 0;

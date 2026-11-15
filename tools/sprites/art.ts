@@ -86,6 +86,7 @@ export const ART: Record<string, (p: Pen) => void> = {
     for (let st = 0; st < 4; st++) for (let l = 0; l < 5; l++) p.lineBetween(0, 34 + st * 90 + l * 7, 640, 34 + st * 90 + l * 7);
   },
   dark: (p) => p.hole(2560, 1680, 1280, 840, 28, 50, 0x07060d, 0.95),
+  glow: (p) => { p.invert = true; p.hole(60, 60, 30, 30, 0, 30, 0xffffff, 0.9); p.invert = false; },
   hud_bar: (p) => { p.fillStyle(PAL.paper).fillRect(0, 0, 640, 60); p.fillStyle(PAL.ink).fillRect(0, 0, 640, 2); },
   live_idle: (p) => live(p, [1, 0], false),
   live_blink: (p) => live(p, [1, 0], true),
