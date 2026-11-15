@@ -97,7 +97,7 @@ export class MixdownScene extends Phaser.Scene {
     this.reel = this.build(i);
     const room = this.reel.room;
     this.gStatic?.destroy();
-    this.gStatic = bakeRoom(this, room);
+    this.gStatic = bakeRoom(this, room, true);
     this.title.setText(`${ROOMS[i].id.slice(1)}  ${ROOMS[i].name}`);
     const n = ROOMS[i].note;
     voice('sfx', { type: 'triangle', f: midiHz(n), dur: 1.25, vol: 0.13 });
@@ -134,7 +134,8 @@ export class MixdownScene extends Phaser.Scene {
       return;
     }
     this.t += Math.min(delta, 100);
-    if (input.pressed('confirm')) return this.finish();
+    // a short guard so an Enter meant for the clear banner cannot skip the reel
+    if (input.pressed('confirm') && this.t > 900) return this.finish();
     if (this.t < INTRO) return;
     const i = Math.floor((this.t - INTRO) / PER_ROOM);
     if (i >= ROOMS.length) return this.finish();

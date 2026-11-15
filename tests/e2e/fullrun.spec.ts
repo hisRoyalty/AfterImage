@@ -23,11 +23,12 @@ test('fresh browser: title screen to the end of the Mixdown', async ({ page }) =
     expect(r?.room, 'room order').toBe(id);
     expect(r?.cleared, `${id} cleared`).toBe(true);
     // dismiss a chapter card if one is up, then continue past the clear banner
-    for (let k = 0; k < 12; k++) {
-      await page.waitForTimeout(250);
+    // one Enter per second at most, so a late press never lands on the next scene
+    for (let k = 0; k < 40; k++) {
+      await page.waitForTimeout(100);
       const now = await page.evaluate(() => { const g = (window as any).__game; return g.scene.isActive('room') ? g.scene.getScene('room').room.json.id : g.scene.getScenes(true)[0]?.scene.key; });
       if (now !== id) break;
-      await page.keyboard.press('Enter');
+      if (k % 10 === 5) await page.keyboard.press('Enter');
     }
   }
   await page.waitForTimeout(500);

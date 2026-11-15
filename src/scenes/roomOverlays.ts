@@ -21,6 +21,7 @@ export class Overlays {
   pauseBg: Phaser.GameObjects.Container | null = null;
   panel: Phaser.GameObjects.Container | null = null;
   videoHint: Phaser.GameObjects.Text | null = null;
+  leaving = false;
 
   constructor(scene: RoomScene, flow: RoomFlow) {
     this.scene = scene;
@@ -120,7 +121,16 @@ export class Overlays {
   }
 
   private next(): void {
+    if (this.leaving) return;
+    this.leaving = true;
     sfx('confirm');
+    const cam = this.scene.cameras.main;
+    const night = this.scene.room.json.chapter === 6;
+    cam.once('camerafadeoutcomplete', () => this.go());
+    cam.fadeOut(200, night ? 20 : 244, night ? 18 : 237, night ? 37 : 224);
+  }
+
+  private go(): void {
     const n = this.scene.index + 1;
     const id = ROOMS[this.scene.index].id;
     if (id === MAIN[MAIN.length - 1].id) this.scene.scene.start('mixdown');

@@ -43,7 +43,7 @@ export function stampSprite(scene: Phaser.Scene, rt: RT, key: string, x: number,
 }
 
 // The static room on a transparent layer (the paper and backdrop sit behind it): mute zones, ground, hazards, drumheads, pad, Out and emitters.
-export function bakeRoom(scene: Phaser.Scene, room: Room, w = 640, h = 420, depth = 0): RT {
+export function bakeRoom(scene: Phaser.Scene, room: Room, withDoor = false, w = 640, h = 420, depth = 0): RT {
   const rt = scene.add.renderTexture(0, 0, w * RES, h * RES).setOrigin(0, 0).setScale(1 / RES).setDepth(depth);
   const night = themeOf(room.json) === 'night';
   for (const m of room.mutes) {
@@ -62,7 +62,7 @@ export function bakeRoom(scene: Phaser.Scene, room: Room, w = 640, h = 420, dept
     }
   }
   stampSprite(scene, rt, 'pad', px(room.spawnX) + 9 - 20, px(room.spawnY));
-  stampSprite(scene, rt, 'out', px(room.out.x), px(room.out.y));
+  if (withDoor) stampSprite(scene, rt, 'door_0', px(room.out.x), px(room.out.y));
   for (const b of room.beams) stampSprite(scene, rt, 'emitter', b.ex * TILE, b.ey * TILE, { angle: Math.atan2(b.dy, b.dx) * (180 / Math.PI) });
   rt.render();
   g.destroy();

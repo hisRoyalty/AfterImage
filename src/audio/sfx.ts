@@ -3,7 +3,7 @@ import { getAudio, voice, midiHz } from './engine.ts';
 export type Sfx =
   | 'jump' | 'land' | 'hardland' | 'bounce' | 'drone' | 'loop' | 'keep' | 'erase' | 'wipe' | 'refuse'
   | 'swOn' | 'swOff' | 'gateOpen' | 'gateClose' | 'beamDeath' | 'staticDeath' | 'pitDeath' | 'tape'
-  | 'tick' | 'note' | 'medal' | 'hint' | 'ui' | 'confirm' | 'back' | 'talk' | 'retry';
+  | 'tick' | 'note' | 'medal' | 'hint' | 'ui' | 'confirm' | 'back' | 'talk' | 'retry' | 'door' | 'click';
 
 // arg: bounce speed (px/tick) for 'bounce', MIDI note for 'note'.
 export function sfx(name: Sfx, arg = 0): void {
@@ -47,6 +47,11 @@ export function sfx(name: Sfx, arg = 0): void {
     case 'staticDeath': voice('sfx', { type: 'noise', f: 1, dur: 0.28, vol: 0.18, filter: 6000 }); break;
     case 'pitDeath': voice('sfx', { type: 'sine', f: 300, f2: 60, dur: 0.4, vol: 0.12 }); break;
     case 'tape': voice('sfx', { type: 'sawtooth', f: 220, f2: 40, dur: 0.5, vol: 0.06, filter: 1200 }); break;
+    case 'door':
+      voice('sfx', { type: 'noise', f: 0.9, dur: 0.05, vol: 0.09, filter: 1800 });
+      voice('sfx', { type: 'triangle', f: 392, f2: 784, at: t + 0.03, dur: 0.22, vol: 0.07 });
+      break;
+    case 'click': voice('sfx', { type: 'square', f: 900, f2: 700, dur: 0.03, vol: 0.035, filter: 3500 }); break;
     case 'retry': voice('sfx', { type: 'triangle', f: 600, f2: 400, dur: 0.06, vol: 0.04 }); break;
     case 'tick': voice('sfx', { type: 'square', f: 1800, dur: 0.02, vol: 0.03, filter: 5000 }); break;
     case 'note': {

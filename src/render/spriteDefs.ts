@@ -44,7 +44,6 @@ export const SPRITES: Record<string, SpriteDef> = {
   static_fill: { w: 20, h: 20 },
   drum: { w: 20, h: 20 },
   pad: { w: 40, h: 20 },
-  out: { w: 20, h: 40 },
   mute: { w: 20, h: 20 },
   emitter: { w: 20, h: 20 },
   beam_on: { w: 20, h: 8 },

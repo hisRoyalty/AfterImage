@@ -10,6 +10,7 @@ import { ROOMS } from '../rooms/index.ts';
 import { bakeRoom } from '../render/terrain.ts';
 import { ObjectLayer } from '../render/objectLayer.ts';
 import { Backdrop } from '../render/backdrop.ts';
+import { Door } from '../render/door.ts';
 import { themeOf } from '../rooms/themes.ts';
 import { SelfLayer, LiveSprite } from '../render/actorLayer.ts';
 import { nine, resizeNine, img, res } from '../render/sprites.ts';
@@ -35,6 +36,7 @@ export class RoomScene extends Phaser.Scene {
   live!: LiveSprite;
   keycap!: Phaser.GameObjects.NineSlice;
   backdrop!: Backdrop;
+  door!: Door;
   dark: Phaser.GameObjects.Image | null = null;
   gDyn!: Phaser.GameObjects.Graphics;
   hud!: Hud;
@@ -89,11 +91,12 @@ export class RoomScene extends Phaser.Scene {
     this.gDyn = this.add.graphics().setDepth(8.5);
     this.dark = null;
     const radius = json.dark ?? 0;
+    // In the night rooms the door glows through the dark, except where the light is at its smallest.
+    this.door = new Door(this, this.room.out.x / SUB, this.room.out.y / SUB, radius > 60 ? 5.8 : 2);
     if (radius > 0) {
       // Night chapter: only a pool of light round you; your selves, beams and (mostly) the Out glow through.
       this.dark = img(this, 'dark', 0, 0, 5.5).setOrigin(0.5).setScale(radius / 50 / res(this, 'dark'));
       for (const b of this.objects.beams) { b.on.setDepth(5.8); b.off.setDepth(5.8); }
-      if (radius > 60) img(this, 'out', this.room.out.x / SUB, this.room.out.y / SUB, 5.8);
     }
     this.hud = new Hud(this);
     const p = json.par.drones + json.par.loops;
@@ -111,7 +114,8 @@ export class RoomScene extends Phaser.Scene {
     input.clear();
     this.flow.start();
     this.events.once('shutdown', () => { this.music.stop(); this.recorder.stop(); });
-    this.cameras.main.fadeIn(180, 244, 237, 224);
+    if (theme === 'night') this.cameras.main.fadeIn(180, 20, 18, 37);
+    else this.cameras.main.fadeIn(180, 244, 237, 224);
     if (!settings().reducedMotion) { this.cameras.main.setZoom(2.08); this.tweens.add({ targets: this.cameras.main, zoom: 2, duration: 420, ease: 'Cubic.easeOut' }); }
     const f1 = () => { this.debug = !this.debug; this.debugText.setVisible(this.debug); };
     this.input.keyboard?.on('keydown-F1', f1);
@@ -168,6 +172,7 @@ export class RoomScene extends Phaser.Scene {
     if (!this.scripted) { this.flow.update(delta); this.music.update(this.s, this.ff, delta); }
     this.advance(delta);
     this.backdrop.update(delta, (this.pb ?? this.s).live.x / SUB, settings().reducedMotion);
+    this.door.update(delta, settings().reducedMotion);
     this.frames++;
     if (time - this.fpsT > 500) { this.fps = (this.frames * 1000) / (time - this.fpsT); this.frames = 0; this.fpsT = time; }
     this.render(time);
@@ -209,6 +214,10 @@ export class RoomScene extends Phaser.Scene {
       const lx = (this.px + (s.live.x - this.px) * a) / SUB;
       const ly = (this.py + (s.live.y - this.py) * a) / SUB;
       this.live.show(lx, ly, this.flow.pose(s), s.live.vy, s.live.ground);
+      // pulled into the open door after a clear, until Playback takes over
+      const pull = this.pb ? 0 : this.flow.pull();
+      this.live.im.setAlpha(1 - pull);
+      if (pull > 0) this.live.im.setPosition(lx + 9 + (this.door.cx - lx - 9) * pull, ly + 20 + (this.door.cy + 18 - ly - 20) * pull).setScale(this.live.im.scaleX * (1 - 0.7 * pull), this.live.im.scaleY * (1 - 0.7 * pull));
       this.dark?.setPosition(lx + 9, ly + 10);
     }
     this.flow.drawFx(g);

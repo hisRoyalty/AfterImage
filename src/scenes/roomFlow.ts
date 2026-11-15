@@ -126,8 +126,17 @@ export class RoomFlow {
     if (new URLSearchParams(location.search).has('rec')) exportRec(json.id, r.sol);
     sfx('note', json.note);
     if (used <= par && !assisted) setTimeout(() => sfx('medal'), 450);
-    const lx = s.live.x / SUB + 9, ly = s.live.y / SUB + 10;
-    this.fx.emit(lx, ly, 24, PAL.live, { speed: 110, life: 0.8 });
+    const door = this.scene.door;
+    door.open();
+    sfx('door');
+    this.fx.emit(door.cx, door.cy, settings().reducedMotion ? 8 : 26, PAL.live, { speed: 120, life: 0.8 });
+  }
+
+  // 0..1: how far the Live has been drawn into the door since the clear.
+  pull(): number {
+    if (this.clearT < 0) return 0;
+    const t = Math.max(0, Math.min(1, (this.clearT - 140) / 260));
+    return t * t * (3 - 2 * t);
   }
 
   blocking(): boolean {

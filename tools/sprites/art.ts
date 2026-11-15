@@ -126,11 +126,6 @@ export const ART: Record<string, (p: Pen) => void> = {
     p.fillStyle(PAL.ink).fillRoundedRect(2, 17, 36, 3, { tl: 2, tr: 2, bl: 0, br: 0 });
     p.lineStyle(1.5, PAL.ink, 0.5).strokeCircle(9, 11, 3.5).strokeCircle(31, 11, 3.5);
   },
-  out: (p) => {
-    p.fillStyle(PAL.live, 0.25).fillRoundedRect(1, 1, 18, 39, { tl: 9, tr: 9, bl: 0, br: 0 });
-    p.lineStyle(2, PAL.ink).strokeRoundedRect(1, 1, 18, 39, { tl: 9, tr: 9, bl: 0, br: 0 });
-    p.fillStyle(PAL.ink).fillTriangle(7, 15, 13, 20, 7, 25);
-  },
   mute: (p) => { p.fillStyle(PAL.mute, 0.16).fillRect(0, 0, 20, 20); p.lineStyle(1, PAL.mute, 0.5); hatch(p, 0, 0, 20, 20, 5); },
   emitter: (p) => { p.fillStyle(PAL.danger).fillTriangle(12, 5, 12, 15, 20, 10); p.fillRect(8, 7, 4, 6); },
   beam_on: (p) => { p.fillStyle(PAL.danger, 0.25).fillRect(0, 0, 20, 8); p.fillStyle(PAL.danger).fillRect(0, 3, 20, 2); },

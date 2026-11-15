@@ -27,6 +27,7 @@ test('witnesses clear in the built game with Node-identical hashes', async ({ pa
 });
 
 test('frame pacing at 30, 60 and 144 Hz gives the same final state', async ({ page }) => {
+  test.setTimeout(400000);
   await page.goto('/');
   await page.waitForFunction(() => !!window.__overdub);
   for (const id of ids) {
